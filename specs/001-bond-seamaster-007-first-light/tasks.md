@@ -54,3 +54,16 @@ Mapped to [`requirements.md`](requirements.md) (R*) and [`design.md`](design.md)
 
 > T7.2–T7.3 require the interactive Connect IQ simulator and remain the human
 > verification gate before store submission. T7.1 is covered by CI.
+
+## Phase 8 — Connect IQ Store publishing
+- [x] T8.1 CI `package` job builds the signed `.iq` export (key from secret or throwaway).
+- [x] T8.2 `release.yml`: tag `vX.Y.Z` → build `.iq` → attach to GitHub Release.
+- [x] T8.3 Store listing copy (`store/listing.md`) + permissions note (`store/PERMISSIONS.md`).
+- [x] T8.4 Full-resolution marketing mockups (`tools/gen_preview.py` → `store/screenshots/`).
+- [x] T8.5 End-to-end submission guide (`PUBLISHING.md`).
+- [ ] T8.6 Provide a persistent developer key + set `CIQ_DEVELOPER_KEY_B64` secret. *(owner)*
+- [ ] T8.7 Capture real simulator screenshots at 454×454. *(owner, needs SDK)*
+- [ ] T8.8 Upload `.iq` + listing in the developer dashboard and submit for review. *(owner)*
+
+> T8.6–T8.8 require your Garmin developer account, signing key, and the
+> interactive simulator/dashboard — they cannot be automated from CI.

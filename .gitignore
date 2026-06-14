@@ -10,6 +10,10 @@ developer_key
 *.der
 *.pem
 
+# Python
+__pycache__/
+*.pyc
+
 # Editor / OS
 .DS_Store
 .vscode/

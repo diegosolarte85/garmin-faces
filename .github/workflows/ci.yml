@@ -91,3 +91,45 @@ jobs:
           name: 007FirstLight-${{ env.CIQ_DEVICE }}-prg
           path: bin/007FirstLight.prg
           if-no-files-found: error
+
+  # Build the store-uploadable .iq export package for every product in the
+  # manifest. Signs with the CIQ_DEVELOPER_KEY_B64 secret if present (required
+  # for a real store submission tied to your account), otherwise a throwaway
+  # key so the export is still validated on every push.
+  package:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/matco/connectiq-tester:latest
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Provide developer key
+        env:
+          CIQ_DEVELOPER_KEY_B64: ${{ secrets.CIQ_DEVELOPER_KEY_B64 }}
+        run: |
+          set -eu
+          if [ -n "${CIQ_DEVELOPER_KEY_B64:-}" ]; then
+            echo "$CIQ_DEVELOPER_KEY_B64" | base64 -d > developer_key.der
+            echo "Signing with developer key from secret."
+          else
+            openssl genrsa -out developer_key.pem 4096
+            openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+              -in developer_key.pem -out developer_key.der
+            echo "::warning::CIQ_DEVELOPER_KEY_B64 not set — .iq signed with a throwaway key (fine to inspect, not usable for store submission/updates)."
+          fi
+
+      - name: Build store package (.iq)
+        run: |
+          set -eu
+          MC="$(command -v monkeyc || echo "${GARMIN_HOME}/bin/monkeyc")"
+          mkdir -p dist
+          "$MC" -e -f monkey.jungle -o dist/007FirstLight.iq -y developer_key.der -w
+
+      - name: Upload .iq package
+        uses: actions/upload-artifact@v4
+        with:
+          name: 007FirstLight-iq
+          path: dist/007FirstLight.iq
+          if-no-files-found: error
