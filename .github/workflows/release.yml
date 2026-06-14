@@ -1,0 +1,71 @@
+name: Release
+
+# Tag a release (e.g. `git tag v1.0.0 && git push --tags`) to build the signed
+# .iq store package and attach it to a GitHub Release for download/submission.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build-iq:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/matco/connectiq-tester:latest
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Provide developer key
+        env:
+          CIQ_DEVELOPER_KEY_B64: ${{ secrets.CIQ_DEVELOPER_KEY_B64 }}
+        run: |
+          set -eu
+          if [ -n "${CIQ_DEVELOPER_KEY_B64:-}" ]; then
+            echo "$CIQ_DEVELOPER_KEY_B64" | base64 -d > developer_key.der
+            echo "Signing with developer key from secret."
+          else
+            openssl genrsa -out developer_key.pem 4096
+            openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+              -in developer_key.pem -out developer_key.der
+            echo "::warning::CIQ_DEVELOPER_KEY_B64 not set — release .iq signed with a throwaway key (not usable for store submission)."
+          fi
+
+      - name: Build store package (.iq)
+        run: |
+          set -eu
+          MC="$(command -v monkeyc || echo "${GARMIN_HOME}/bin/monkeyc")"
+          mkdir -p dist
+          "$MC" -e -f monkey.jungle -o dist/007FirstLight.iq -y developer_key.der -w
+
+      - name: Upload .iq artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: 007FirstLight-iq
+          path: dist/007FirstLight.iq
+          if-no-files-found: error
+
+  release:
+    needs: build-iq
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download .iq artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: 007FirstLight-iq
+          path: dist
+
+      - name: Create GitHub Release with .iq
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "007 First Light ${GITHUB_REF_NAME}" \
+            --notes "Connect IQ store package for the 007 First Light watch face (Fenix 8 Pro 47mm). Upload dist/007FirstLight.iq at https://apps.garmin.com/developer/dashboard — see PUBLISHING.md." \
+            dist/007FirstLight.iq

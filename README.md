@@ -7,11 +7,14 @@ AMOLED), inspired by the **Omega Seamaster Diver 300M Chronograph "007 First Lig
 > central seconds & 3 o'clock counter · poppy-red *Seamaster* script · white
 > Super-LumiNova that glows alive on the wrist.
 
-![face preview](resources/drawables/preview_icon.png)
+| Black Ceramic | Dawn First-Light | Poppy Red accent |
+| :---: | :---: | :---: |
+| ![black ceramic](store/screenshots/face_black_ceramic.png) | ![dawn](store/screenshots/face_dawn.png) | ![red accent](store/screenshots/face_red_accent.png) |
 
-*Preview rendered by `tools/gen_icons.py` (the same palette the watch face uses).
-For the source-watch design brief see
-[`docs/DESIGN_REFERENCE.md`](docs/DESIGN_REFERENCE.md).*
+*454×454 mockups rendered by `tools/gen_preview.py` (the same palette and
+geometry the watch face uses). For the source-watch design brief see
+[`docs/DESIGN_REFERENCE.md`](docs/DESIGN_REFERENCE.md); to publish, see
+[`PUBLISHING.md`](PUBLISHING.md).*
 
 ---
 
@@ -46,11 +49,12 @@ Requires the [Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/) (≥
 API level 5.1) and a developer key.
 
 ```bash
-# generate launcher icons (pure-python, no deps)
+# generate launcher icons + marketing mockups (pure-python, no deps)
 python3 tools/gen_icons.py
+python3 tools/gen_preview.py
 
 # compile for the Fenix 8 Pro 47mm simulator
-monkeyc -d fenix8pro47mm -f monkey.jungle -o bin/007FirstLight.prg -y developer_key
+monkeyc -d fenix8pro47mm -f monkey.jungle -o bin/007FirstLight.prg -y developer_key.der
 
 # run in the Connect IQ simulator
 connectiq && monkeydo bin/007FirstLight.prg fenix8pro47mm
@@ -59,8 +63,12 @@ connectiq && monkeydo bin/007FirstLight.prg fenix8pro47mm
 Build a sideloadable/store package:
 
 ```bash
-monkeyc -e -f monkey.jungle -o bin/007FirstLight.iq -y developer_key
+monkeyc -e -f monkey.jungle -o dist/007FirstLight.iq -y developer_key.der
 ```
+
+To publish to the Connect IQ Store, follow [`PUBLISHING.md`](PUBLISHING.md). CI
+builds the signed `.iq` on every push, and tagging `vX.Y.Z` attaches it to a
+GitHub Release.
 
 > The Fenix 8 Pro restricts *app* installs to Garmin-certified titles for LTE
 > security, but **watch faces are unaffected** — they sideload and distribute
