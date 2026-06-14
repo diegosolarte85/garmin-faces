@@ -47,8 +47,8 @@ Mapped to [`requirements.md`](requirements.md) (R*) and [`design.md`](design.md)
 
 ## Phase 7 — Verification
 - [x] T7.0 CI: SDK-free asset + XML validation (`.github/workflows/ci.yml`).
-- [~] T7.1 Compile for `fenix8pro47mm` — automated in CI `build` job (matco
-  Connect IQ image). Marked done once the workflow is green.
+- [x] T7.1 Compile for `fenix8pro47mm` — green in CI `build` job (monkeyc 9.2.0,
+  matco Connect IQ image); `.prg` artifact produced.
 - [ ] T7.2 Simulator: active vs always-on visual check; burn-in audit.
 - [ ] T7.3 Settings round-trip in simulator.
 
