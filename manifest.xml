@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  007 First Light — Garmin Connect IQ watch face manifest.
+  Tribute to the Omega Seamaster Diver 300M Chronograph "007 First Light".
+  See specs/001-bond-seamaster-007-first-light/ for the governing spec.
+-->
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application
+        entry="BondSeamasterApp"
+        id="748221f35d424530bb6aae3b1e46deb3"
+        launcherIcon="@Drawables.LauncherIcon"
+        name="@Strings.AppName"
+        type="watchface"
+        minApiLevel="5.1.0">
+
+        <!-- Reference target: Fenix 8 Pro 47mm (454x454 round AMOLED).
+             Geometry is resolution-independent; add more round AMOLED
+             products here as they are validated. -->
+        <iq:products>
+            <iq:product id="fenix8pro47mm"/>
+        </iq:products>
+
+        <!-- Minimal scope: time, system stats (battery) and ActivityMonitor
+             reads work without special permissions. Optional HR / Body Battery
+             complications degrade gracefully when data is unavailable. -->
+        <iq:permissions/>
+
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>

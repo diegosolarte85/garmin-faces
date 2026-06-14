@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+    <setting propertyKey="@Properties.DialTheme" title="@Strings.SetDialTheme">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.OptThemeBlack</listEntry>
+            <listEntry value="1">@Strings.OptThemeDawn</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.AccentColor" title="@Strings.SetAccent">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.OptAccentBronze</listEntry>
+            <listEntry value="1">@Strings.OptAccentRed</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.LeftSubdial" title="@Strings.SetLeftSubdial">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.OptLeft24h</listEntry>
+            <listEntry value="1">@Strings.OptLeftHr</listEntry>
+            <listEntry value="2">@Strings.OptLeftBody</listEntry>
+            <listEntry value="3">@Strings.OptLeftOff</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.RightSubdial" title="@Strings.SetRightSubdial">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.OptRightBattery</listEntry>
+            <listEntry value="1">@Strings.OptRightSteps</listEntry>
+            <listEntry value="2">@Strings.OptRightActive</listEntry>
+            <listEntry value="3">@Strings.OptRightOff</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.SecondsMode" title="@Strings.SetSeconds">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.OptSecSweep</listEntry>
+            <listEntry value="1">@Strings.OptSecHidden</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.DawnSweep" title="@Strings.SetDawn">
+        <settingConfig type="boolean"/>
+    </setting>
+</settings>

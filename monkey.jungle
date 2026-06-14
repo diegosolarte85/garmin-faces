@@ -1,0 +1,7 @@
+# Connect IQ build configuration — 007 First Light watch face.
+# Default source + resources apply to every product.
+
+project.manifest = manifest.xml
+
+base.sourcePath = source
+base.resourcePath = resources
