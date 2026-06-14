@@ -71,8 +71,10 @@ jobs:
           ls "${HOME}/.Garmin/ConnectIQ/Devices" 2>/dev/null || true
 
       - name: Compile watch face
+        # The container's default shell is dash (`sh -e`), so avoid bashisms
+        # like `set -o pipefail`. `-e` already aborts on the first error.
         run: |
-          set -euo pipefail
+          set -eu
           MC="$(command -v monkeyc || echo "${GARMIN_HOME}/bin/monkeyc")"
           mkdir -p bin
           "$MC" -d "$CIQ_DEVICE" \
