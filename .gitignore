@@ -1,0 +1,17 @@
+# Connect IQ build artifacts
+bin/
+*.prg
+*.prg.debug.xml
+*.iq
+*.mir
+
+# SDK / developer key (never commit signing keys)
+developer_key
+*.der
+*.pem
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp

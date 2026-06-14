@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<strings>
+    <string id="AppName">007 First Light</string>
+
+    <!-- Settings titles -->
+    <string id="SetDialTheme">Dial theme</string>
+    <string id="SetAccent">Accent color</string>
+    <string id="SetLeftSubdial">Left dial (9 o'clock)</string>
+    <string id="SetRightSubdial">Right dial (3 o'clock)</string>
+    <string id="SetSeconds">Seconds hand</string>
+    <string id="SetDawn">Dawn first-light sweep</string>
+
+    <!-- Theme options -->
+    <string id="OptThemeBlack">Black Ceramic</string>
+    <string id="OptThemeDawn">Dawn First-Light</string>
+
+    <!-- Accent options -->
+    <string id="OptAccentBronze">Bronze (PVD gold)</string>
+    <string id="OptAccentRed">Poppy red</string>
+
+    <!-- Left subdial options -->
+    <string id="OptLeft24h">24-hour</string>
+    <string id="OptLeftHr">Heart rate</string>
+    <string id="OptLeftBody">Body Battery</string>
+    <string id="OptLeftOff">Off</string>
+
+    <!-- Right subdial options -->
+    <string id="OptRightBattery">Battery</string>
+    <string id="OptRightSteps">Steps</string>
+    <string id="OptRightActive">Active minutes</string>
+    <string id="OptRightOff">Off</string>
+
+    <!-- Seconds options -->
+    <string id="OptSecSweep">Sweep, hidden in always-on</string>
+    <string id="OptSecHidden">Always hidden</string>
+
+    <!-- Dial print -->
+    <string id="DialLine1">DIVER 300M</string>
+    <string id="DialLine2">CO‑AXIAL MASTER CHRONOMETER</string>
+    <string id="DialBrand">SEAMASTER</string>
+    <string id="DialChrono">CHRONOGRAPH</string>
+</strings>
