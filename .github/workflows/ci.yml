@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # Fast, SDK-free checks: regenerate icons and validate all XML resources.
+  assets-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate launcher icons
+        run: python3 tools/gen_icons.py
+
+      - name: Verify icons are valid PNGs
+        run: |
+          python3 - <<'PY'
+          for p in ["resources/drawables/launcher_icon.png",
+                    "resources/drawables/preview_icon.png"]:
+              with open(p, "rb") as f:
+                  sig = f.read(8)
+              assert sig == b"\x89PNG\r\n\x1a\n", p + " is not a valid PNG"
+              print("ok:", p)
+          PY
+
+      - name: Install xmllint
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
+      - name: Validate XML (well-formedness)
+        run: |
+          set -e
+          xmllint --noout manifest.xml
+          find resources -name '*.xml' -print0 | xargs -0 -r xmllint --noout
+          echo "XML OK"
+
+  # Real compile against the Connect IQ SDK. The matco image bundles monkeyc,
+  # the SDK and device files under /root — GitHub overrides HOME in container
+  # jobs, so we pin HOME=/root for the SDK to find its devices.
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/matco/connectiq-tester:latest
+    env:
+      HOME: /root
+      CIQ_DEVICE: fenix8pro47mm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate a throwaway developer key
+        run: |
+          openssl genrsa -out developer_key.pem 4096
+          openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+            -in developer_key.pem -out developer_key.der
+
+      - name: Show SDK + available devices (diagnostics)
+        run: |
+          echo "GARMIN_HOME=${GARMIN_HOME:-unset}"
+          MC="$(command -v monkeyc || echo "${GARMIN_HOME}/bin/monkeyc")"
+          echo "monkeyc=$MC"; "$MC" --version || true
+          echo "Devices available:"
+          ls "${HOME}/.Garmin/ConnectIQ/Devices" 2>/dev/null || true
+
+      - name: Compile watch face
+        run: |
+          set -euo pipefail
+          MC="$(command -v monkeyc || echo "${GARMIN_HOME}/bin/monkeyc")"
+          mkdir -p bin
+          "$MC" -d "$CIQ_DEVICE" \
+            -f monkey.jungle \
+            -o "bin/007FirstLight.prg" \
+            -y developer_key.der \
+            -w
+
+      - name: Upload compiled .prg
+        uses: actions/upload-artifact@v4
+        with:
+          name: 007FirstLight-${{ env.CIQ_DEVICE }}-prg
+          path: bin/007FirstLight.prg
+          if-no-files-found: error

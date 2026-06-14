@@ -66,6 +66,19 @@ monkeyc -e -f monkey.jungle -o bin/007FirstLight.iq -y developer_key
 > security, but **watch faces are unaffected** — they sideload and distribute
 > through the Connect IQ Store as normal.
 
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push/PR:
+
+- **assets-and-lint** — regenerates the icons and validates every XML resource
+  (no SDK required).
+- **build** — compiles the face for `fenix8pro47mm` inside the
+  `ghcr.io/matco/connectiq-tester` image (bundles `monkeyc`, the SDK and device
+  files), generating a throwaway developer key, and uploads the `.prg` artifact.
+
+This is the automated counterpart to verification tasks **T7.1** in the spec.
+Override the compile target by setting the `CIQ_DEVICE` env in the workflow.
+
 ## Settings
 
 Configurable from Garmin Connect / Connect IQ Store app:

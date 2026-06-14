@@ -46,9 +46,11 @@ Mapped to [`requirements.md`](requirements.md) (R*) and [`design.md`](design.md)
 - [x] T6.3 12h/24h + locale date verification path. (R6.2)
 
 ## Phase 7 — Verification
-- [ ] T7.1 Compile for `fenix8pro47mm` (requires Connect IQ SDK locally).
+- [x] T7.0 CI: SDK-free asset + XML validation (`.github/workflows/ci.yml`).
+- [~] T7.1 Compile for `fenix8pro47mm` — automated in CI `build` job (matco
+  Connect IQ image). Marked done once the workflow is green.
 - [ ] T7.2 Simulator: active vs always-on visual check; burn-in audit.
 - [ ] T7.3 Settings round-trip in simulator.
 
-> T7.* require the Connect IQ SDK/simulator, which is not present in the build
-> container. They are the human/CI verification gate before store submission.
+> T7.2–T7.3 require the interactive Connect IQ simulator and remain the human
+> verification gate before store submission. T7.1 is covered by CI.
