@@ -106,7 +106,6 @@ class DialRenderer {
         dc.setColor(theme.enamel(), Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(cx, cy, rIn);
 
-        var rTick = (rOut + rIn) / 2.0;
         for (var m = 0; m < 60; m++) {
             var frac = m / 60.0;
             var major = (m % 5 == 0);
@@ -255,7 +254,7 @@ class DialRenderer {
         dc.setColor(theme.enamel(), Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth((r * 0.34).toNumber() + 1);
         // Garmin arc: 0deg=3 o'clock, CCW. Leave a gap at the bottom (~270deg).
-        dc.drawArc(cx, cy, r, Graphics.ARC_CCW, 310, 230);
+        dc.drawArc(cx, cy, r, Graphics.ARC_COUNTER_CLOCKWISE, 310, 230);
         dc.setPenWidth(1);
         // feet
         var fy = cy + r * 0.55;

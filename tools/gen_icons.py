@@ -197,11 +197,11 @@ def write_png(cv, path):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    icon = render(64)
-    write_png(icon, os.path.join(OUT, "launcher_icon.png"))
+    # 65x65 matches the fenix8pro47mm launcher-icon size (avoids scaling).
+    write_png(render(65), os.path.join(OUT, "launcher_icon.png"))
     # A larger preview tile, handy for the store / README.
     write_png(render(240), os.path.join(OUT, "preview_icon.png"))
-    print("wrote launcher_icon.png (64) and preview_icon.png (240)")
+    print("wrote launcher_icon.png (65) and preview_icon.png (240)")
 
 
 if __name__ == "__main__":

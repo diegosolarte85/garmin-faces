@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # On PR branches the pull_request event covers it; restrict push to main so
+  # a PR branch doesn't trigger two identical runs.
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
 
 permissions:
