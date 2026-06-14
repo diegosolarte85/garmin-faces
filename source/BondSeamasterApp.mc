@@ -14,9 +14,10 @@ class BondSeamasterApp extends Application.AppBase {
 
     public function onStop(state as Dictionary?) as Void {}
 
-    public function getInitialView() as Array<Views or InputDelegates>? {
-        _view = new BondSeamasterView();
-        return [_view] as Array<Views or InputDelegates>;
+    public function getInitialView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] {
+        var view = new BondSeamasterView();
+        _view = view;
+        return [view];
     }
 
     // Re-read settings and invalidate cached static art on change. (R5.2)

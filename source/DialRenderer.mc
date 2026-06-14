@@ -55,18 +55,19 @@ class DialRenderer {
         for (var r = 0; r < rows; r++) {
             var baseY = cy - rad + (2.0 * rad) * (r + 0.5) / rows;
             var amp = rad * 0.012;
-            var prevX = null; var prevY = null;
+            var have = false;
+            var prevX = 0.0; var prevY = 0.0;
             var x = cx - rad;
             while (x <= cx + rad) {
                 var yy = baseY + amp * Math.sin(x / (rad * 0.07) + r * 0.6);
                 if (insideDial(x, yy, cx, cy, rad)) {
-                    if (prevX != null) {
+                    if (have) {
                         dc.setColor(blend(lo, hi, 0.5), Graphics.COLOR_TRANSPARENT);
                         dc.drawLine(prevX, prevY, x, yy);
                     }
-                    prevX = x; prevY = yy;
+                    prevX = x; prevY = yy; have = true;
                 } else {
-                    prevX = null; prevY = null;
+                    have = false;
                 }
                 x += 5.0;
             }

@@ -21,9 +21,14 @@
         </iq:products>
 
         <!-- Minimal scope: time, system stats (battery) and ActivityMonitor
-             reads work without special permissions. Optional HR / Body Battery
-             complications degrade gracefully when data is unavailable. -->
-        <iq:permissions/>
+             reads need no permission. SensorHistory is required to *reference*
+             the heart-rate / Body Battery history APIs used by the optional
+             subdial complications (the compiler enforces this even behind a
+             runtime `has` guard); they still degrade gracefully when data is
+             unavailable. -->
+        <iq:permissions>
+            <iq:uses-permission id="SensorHistory"/>
+        </iq:permissions>
 
         <iq:languages>
             <iq:language>eng</iq:language>

@@ -148,9 +148,12 @@ buffer when the dial-affecting tokens changed.
 
 ## 6. Permissions
 
-Watch faces run with minimal scope. Heart rate / Body Battery complications read
-through `Toybox.ActivityMonitor` / `Toybox.SensorHistory`, guarded so the face
-works (showing empty subdials) if a reading is null. No network, no positioning.
+Watch faces run with minimal scope. Battery (`System.getSystemStats`), steps and
+active minutes (`ActivityMonitor`) need no permission. Heart rate / Body Battery
+read through `Toybox.SensorHistory`, which requires the **`SensorHistory`**
+permission — the compiler enforces this even behind a runtime `has` guard, so it
+is declared in `manifest.xml`. All reads are guarded so the face shows empty
+subdials when a value is null. No network, no positioning.
 
 ## 7. Intentional deviations from the source object
 
