@@ -6,6 +6,14 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Manual dispatch (e.g. when tag pushes are unavailable): creates the tag
+  # via `gh release create --target <sha>` on whatever ref it runs from.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag to create (e.g. v1.0.0)"
+        required: true
+        default: "v1.0.0"
 
 permissions:
   contents: write
@@ -62,10 +70,12 @@ jobs:
       - name: Create GitHub Release with .iq
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.version || github.ref_name }}
         run: |
           set -eu
-          gh release create "${GITHUB_REF_NAME}" \
+          gh release create "${TAG}" \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "007 First Light ${GITHUB_REF_NAME}" \
+            --target "${GITHUB_SHA}" \
+            --title "007 First Light ${TAG}" \
             --notes "Connect IQ store package for the 007 First Light watch face (Fenix 8 Pro 47mm). Upload dist/007FirstLight.iq at https://apps.garmin.com/developer/dashboard — see PUBLISHING.md." \
             dist/007FirstLight.iq
