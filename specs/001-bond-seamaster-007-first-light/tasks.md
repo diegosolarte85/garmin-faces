@@ -67,3 +67,12 @@ Mapped to [`requirements.md`](requirements.md) (R*) and [`design.md`](design.md)
 
 > T8.6–T8.8 require your Garmin developer account, signing key, and the
 > interactive simulator/dashboard — they cannot be automated from CI.
+
+## Phase 9 — Photo-fidelity overhaul (fidelity-v2)
+- [x] T9.1 3-lens photo critique vs reference (bezel/markers, dial/typography, hands/subdials).
+- [x] T9.2 `fidelity-v2.md` spec: unified R normalization, color + geometry tables, render recipes.
+- [x] T9.3 Theme.mc/Geometry.mc token contract v2 (backward-compatible accessors).
+- [x] T9.4 DialRenderer.mc: carved wave field, rotated bezel numerals, dot markers + rims, snailed subdials, bronze printed ring, full text stack.
+- [x] T9.5 Hands.mc: skeleton sword hands, bronze chrono needle + tail lollipop, slotted hub.
+- [x] T9.6 gen_preview.py rewritten to fidelity-v2; verified visually against the photo.
+- [ ] T9.7 CI compile green for the v2 Monkey C. *(gate before merge)*

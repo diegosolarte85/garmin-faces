@@ -1,5 +1,9 @@
 # Design — 007 First Light Watch Face
 
+> **Fidelity v2:** the authoritative geometry/color tables now live in
+> [`fidelity-v2.md`](fidelity-v2.md), derived from photo measurement of the real
+> watch. Where this file and fidelity-v2 disagree, fidelity-v2 wins.
+
 Implements [`requirements.md`](requirements.md). Governed by
 [`../../docs/CONSTITUTION.md`](../../docs/CONSTITUTION.md).
 
