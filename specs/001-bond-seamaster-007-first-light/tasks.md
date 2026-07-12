@@ -75,4 +75,4 @@ Mapped to [`requirements.md`](requirements.md) (R*) and [`design.md`](design.md)
 - [x] T9.4 DialRenderer.mc: carved wave field, rotated bezel numerals, dot markers + rims, snailed subdials, bronze printed ring, full text stack.
 - [x] T9.5 Hands.mc: skeleton sword hands, bronze chrono needle + tail lollipop, slotted hub.
 - [x] T9.6 gen_preview.py rewritten to fidelity-v2; verified visually against the photo.
-- [ ] T9.7 CI compile green for the v2 Monkey C. *(gate before merge)*
+- [x] T9.7 CI compile green for the v2 Monkey C (build + package pass first try).
