@@ -23,7 +23,7 @@ class DialRenderer {
     // --- spec-local scalars (fractions of R unless noted) ---
     private const WAVE_HI_W    = 0.014; // §3 crest highlight stroke width
     private const WAVE_GR_W    = 0.011; // §3 groove shadow stroke width
-    private const WAVE_STEP    = 0.030; // polyline x-step for wave rows
+    private const WAVE_STEP    = 0.055; // polyline x-step (coarse: watchdog budget)
     private const WAVE_PH_AMP  = 0.040; // §2.11 phase drift, fraction of wavelength
     private const WAVE_PH_RATE = 0.630; // rad/row — ±0.04 over ~5 rows
     private const GLOSS_MAX    = 0.230; // §3 gloss gradient blend cap (top third)
@@ -97,55 +97,63 @@ class DialRenderer {
         var dialR = _geo.rad(_geo.DIAL_R);
 
         // 1) base: ridge-face fill with a broad gloss gradient over the top
-        //    third (+8-12 luminance points -> blend toward WAVE_HI).
+        //    third. On-device watchdog budget: stride-3 scanlines with a
+        //    12-entry precomputed band LUT instead of per-pixel blends.
         var ridge = theme.waveRidge();
         var hi = theme.waveHi();
         var topThird = dialR / 3.0;
+        var bands = new Array<Number>[12];
+        for (var b = 0; b < 12; b++) {
+            bands[b] = blend(ridge, hi, GLOSS_MAX * b / 11.0);
+        }
         var lastCol = -1;
+        var stride = 3;
+        dc.setPenWidth(stride + 1);
         var y = (cy - dialR).toNumber() + 1;
         var yEnd = (cy + dialR).toNumber() - 1;
-        dc.setPenWidth(1);
         while (y <= yEnd) {
             var dy = y - cy;
             var half = dialR * dialR - dy * dy;
             if (half > 0) {
                 half = Math.sqrt(half);
-                var gt = 0.0;
+                var col = ridge;
                 if (dy < -topThird) {
-                    gt = ((-dy) - topThird) / (dialR - topThird) * GLOSS_MAX;
+                    var idx = (((-dy) - topThird) / (dialR - topThird) * 11.0).toNumber();
+                    if (idx > 11) { idx = 11; }
+                    col = bands[idx];
                 }
-                var col = blend(ridge, hi, gt);
                 if (col != lastCol) {
                     dc.setColor(col, Graphics.COLOR_TRANSPARENT);
                     lastCol = col;
                 }
                 dc.drawLine(cx - half, y, cx + half, y);
             }
-            y++;
+            y += stride;
         }
 
-        // 2) carved rows: crest highlight stroke + groove shadow just below.
+        // 2) carved rows: one pass per row draws the crest highlight AND the
+        //    groove shadow from the same sine sample (halves the trig work).
         var pitch = R * _geo.WAVE_PITCH;
         var hiPen = penW(R * WAVE_HI_W);
-        var grPen = penW(R * WAVE_GR_W);
         var grOff = R * (WAVE_HI_W + WAVE_GR_W) / 2.0;
         var nRows = ((dialR + R * _geo.WAVE_AMP) / pitch).toNumber() + 1;
         for (var i = -nRows; i <= nRows; i++) {
             // adjacent rows nearly in phase, drifting slowly (±0.04 wavelengths
             // over ~5 rows) — organic, not cloned sines (§2.11).
             var ph = 2.0 * Math.PI * WAVE_PH_AMP * Math.sin(i * WAVE_PH_RATE);
-            var rowY = i * pitch;
-            waveRow(dc, rowY, ph, 0.0, hiPen, theme.waveHi(), theme.waveGloss());
-            waveRow(dc, rowY, ph, grOff, grPen, theme.waveGroove(), theme.waveGroove());
+            waveRow(dc, i * pitch, ph, grOff, hiPen,
+                    theme.waveHi(), theme.waveGloss(), theme.waveGroove());
         }
         dc.setPenWidth(1);
     }
 
-    // One undulating row stroke: y(x) = cy + rowY + A*sin(kx + phase) + yOff.
-    // glossCol replaces baseCol in the upper-left gloss zone (§1 WAVE_HI note).
+    // One undulating row: y(x) = cy + rowY + A*sin(kx + phase). Draws the
+    // crest highlight stroke and the groove shadow (offset grOff below it)
+    // from the same sine sample — allocation-free, coarse step, one trig call
+    // per segment (on-device watchdog budget).
     private function waveRow(dc as Graphics.Dc, rowY as Numeric, phase as Numeric,
-                             yOff as Numeric, pen as Number, baseCol as Number,
-                             glossCol as Number) as Void {
+                             grOff as Numeric, pen as Number, baseCol as Number,
+                             glossCol as Number, grooveCol as Number) as Void {
         var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
         var dialR = _geo.rad(_geo.DIAL_R);
         var rr2 = (dialR - 1.0) * (dialR - 1.0);
@@ -155,20 +163,18 @@ class DialRenderer {
         dc.setPenWidth(pen);
         var have = false;
         var px = 0.0; var py = 0.0;
-        var lastCol = -1;
         var x = cx - dialR;
         var xEnd = cx + dialR;
         while (x <= xEnd) {
-            var yy = cy + rowY + amp * Math.sin(k * (x - cx) + phase) + yOff;
+            var yy = cy + rowY + amp * Math.sin(k * (x - cx) + phase);
             var dx = x - cx; var dy = yy - cy;
             if (dx * dx + dy * dy <= rr2) {
                 if (have) {
-                    var col = (x < cx && yy < cy) ? glossCol : baseCol;
-                    if (col != lastCol) {
-                        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-                        lastCol = col;
-                    }
+                    dc.setColor((x < cx && yy < cy) ? glossCol : baseCol,
+                                Graphics.COLOR_TRANSPARENT);
                     dc.drawLine(px, py, x, yy);
+                    dc.setColor(grooveCol, Graphics.COLOR_TRANSPARENT);
+                    dc.drawLine(px, py + grOff, x, yy + grOff);
                 }
                 px = x; py = yy; have = true;
             } else {
