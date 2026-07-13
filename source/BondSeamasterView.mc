@@ -62,9 +62,9 @@ class BondSeamasterView extends WatchUi.WatchFace {
         _theme.lowPower = false;
         // NB: no static-art rebuild here — the baked buffer is reused, so we
         // never re-run the heavy render on a wrist-raise (watchdog safety).
-        if (_theme.dawnSweep) {
-            _dawn.arm();
-        }
+        // The dawn-sweep flourish is intentionally NOT armed here: on a busy
+        // AMOLED dial its warm sweep read as flicker/noise on wake. It stays
+        // available via the setting but defaults off.
         WatchUi.requestUpdate();
     }
 
