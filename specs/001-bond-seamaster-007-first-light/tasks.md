@@ -76,3 +76,10 @@ Mapped to [`requirements.md`](requirements.md) (R*) and [`design.md`](design.md)
 - [x] T9.5 Hands.mc: skeleton sword hands, bronze chrono needle + tail lollipop, slotted hub.
 - [x] T9.6 gen_preview.py rewritten to fidelity-v2; verified visually against the photo.
 - [x] T9.7 CI compile green for the v2 Monkey C (build + package pass first try).
+
+## Phase 10 — On-device hardening
+- [x] T10.1 Reproduce on real Fenix 8 Pro 47mm: `Watchdog Tripped` from CIQ_LOG.YML.
+- [x] T10.2 Root cause: single-pass static render (~2.5k ops) + per-wake rebuild.
+- [x] T10.3 Fix: progressive 7-stage buffered render; buffer reused (no wake rebuild).
+- [x] T10.4 Trim heaviest loops (wave sampling, minute-track detail).
+- [x] T10.5 Verified rendering on-device (v1.0.3). No crash on load or wrist-raise.

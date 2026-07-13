@@ -19,6 +19,13 @@ class BondSeamasterView extends WatchUi.WatchFace {
     private var _bufRef as Graphics.BufferedBitmapReference?;
     private var _lowPower as Boolean = false;
 
+    // Progressive static-render cursor: -1 = idle/complete, >=0 = the next
+    // DialRenderer stage to paint into the buffer. The full dial is far too
+    // heavy to draw in one onUpdate (it trips the device execution watchdog),
+    // so we paint one bounded stage per frame until done, once — the buffer is
+    // then reused for the whole session (no per-wake rebuild).
+    private var _buildStage as Number = -1;
+
     // previous second-hand bounding box for partial-update clipping
     private var _prevBox as Array<Number>?;
 
@@ -35,25 +42,26 @@ class BondSeamasterView extends WatchUi.WatchFace {
     public function onLayout(dc as Graphics.Dc) as Void {
         _geo.setBounds(dc.getWidth(), dc.getHeight());
         _theme.load();
-        rebuildStatic(dc.getWidth(), dc.getHeight());
+        startBuild(dc.getWidth(), dc.getHeight());
     }
 
     public function onShow() as Void {
-        if (_theme.dirty) {
-            rebuildStatic(_geo.w, _geo.h);
+        if (_bufRef == null && _buildStage < 0) {
+            startBuild(_geo.w, _geo.h);
         }
     }
 
-    // Called by the app on a settings change.
+    // Called by the app on a settings change — rebuild the static art once.
     public function reloadSettings() as Void {
-        _theme.load(); // sets dirty
-        rebuildStatic(_geo.w, _geo.h);
+        _theme.load();
+        startBuild(_geo.w, _geo.h);
     }
 
     public function onExitSleep() as Void {
         _lowPower = false;
         _theme.lowPower = false;
-        _theme.dirty = true; // re-bake static art in active palette
+        // NB: no static-art rebuild here — the baked buffer is reused, so we
+        // never re-run the heavy render on a wrist-raise (watchdog safety).
         if (_theme.dawnSweep) {
             _dawn.arm();
         }
@@ -63,7 +71,6 @@ class BondSeamasterView extends WatchUi.WatchFace {
     public function onEnterSleep() as Void {
         _lowPower = true;
         _theme.lowPower = true;
-        _theme.dirty = true; // re-bake static art in dimmed palette
         _dawn.cancel();
         _prevBox = null;
         WatchUi.requestUpdate();
@@ -71,8 +78,8 @@ class BondSeamasterView extends WatchUi.WatchFace {
 
     // --- full paint ---
     public function onUpdate(dc as Graphics.Dc) as Void {
-        if (_theme.dirty) {
-            rebuildStatic(dc.getWidth(), dc.getHeight());
+        if (_buildStage >= 0) {
+            advanceBuild();          // paint one bounded stage into the buffer
         }
         blitStatic(dc);
 
@@ -101,7 +108,9 @@ class BondSeamasterView extends WatchUi.WatchFace {
         }
         _hands.drawHub(dc, _theme);
 
-        if (!_lowPower && _dawn.isActive()) {
+        // keep frames coming while the dawn effect plays or the buffer is
+        // still assembling itself over successive frames
+        if (_buildStage >= 0 || (!_lowPower && _dawn.isActive())) {
             WatchUi.requestUpdate();
         }
     }
@@ -145,19 +154,35 @@ class BondSeamasterView extends WatchUi.WatchFace {
         _dial.draw(dc, _theme);
     }
 
-    private function rebuildStatic(w as Number, h as Number) as Void {
+    // Allocate the off-screen buffer and arm progressive rendering. Paints a
+    // cheap base fill so the first frames aren't blank while the dial assembles
+    // over the next STAGE_COUNT updates.
+    private function startBuild(w as Number, h as Number) as Void {
         if (Graphics has :createBufferedBitmap) {
             _bufRef = Graphics.createBufferedBitmap({:width => w, :height => h});
             var bmp = (_bufRef != null) ? _bufRef.get() : null;
             if (bmp != null) {
-                _dial.draw(bmp.getDc(), _theme);
+                var bdc = bmp.getDc();
+                bdc.setColor(_theme.ceramicBase(), _theme.ceramicBase());
+                bdc.clear();
+                _buildStage = 0;
                 _theme.dirty = false;
                 return;
             }
         }
-        // no buffer available — leave _bufRef null; blitStatic draws directly
+        // no buffer available — blitStatic falls back to direct draw
         _bufRef = null;
+        _buildStage = -1;
         _theme.dirty = false;
+    }
+
+    // Paint exactly one static-render stage into the buffer per call.
+    private function advanceBuild() as Void {
+        if (_bufRef == null) { _buildStage = -1; return; }
+        var bmp = _bufRef.get();
+        if (bmp == null) { _buildStage = -1; return; }
+        var done = _dial.drawStage(bmp.getDc(), _theme, _buildStage);
+        _buildStage = done ? -1 : _buildStage + 1;
     }
 
     private function dayOfMonth() as Number {

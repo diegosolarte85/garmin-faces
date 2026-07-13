@@ -18,6 +18,8 @@
              products here as they are validated. -->
         <iq:products>
             <iq:product id="fenix8pro47mm"/>
+            <iq:product id="fenix847mm"/>
+            <iq:product id="fenix843mm"/>
         </iq:products>
 
         <!-- Minimal scope: time, system stats (battery) and ActivityMonitor

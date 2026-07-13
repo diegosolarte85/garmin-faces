@@ -23,7 +23,7 @@ class DialRenderer {
     // --- spec-local scalars (fractions of R unless noted) ---
     private const WAVE_HI_W    = 0.014; // §3 crest highlight stroke width
     private const WAVE_GR_W    = 0.011; // §3 groove shadow stroke width
-    private const WAVE_STEP    = 0.030; // polyline x-step for wave rows
+    private const WAVE_STEP    = 0.075; // polyline x-step (coarse: watchdog budget)
     private const WAVE_PH_AMP  = 0.040; // §2.11 phase drift, fraction of wavelength
     private const WAVE_PH_RATE = 0.630; // rad/row — ±0.04 over ~5 rows
     private const GLOSS_MAX    = 0.230; // §3 gloss gradient blend cap (top third)
@@ -73,109 +73,146 @@ class DialRenderer {
     }
 
     // Static art entry point — called once into the buffered bitmap.
-    public function draw(dc as Graphics.Dc, theme as Theme) as Void {
-        Draw.aa(dc, true);
-        dc.setColor(theme.ceramicBase(), theme.ceramicBase());
-        dc.clear();
+    // Number of progressive render stages (see drawStage). The static art is
+    // far too heavy to draw in one call without tripping the on-device
+    // execution watchdog, so BondSeamasterView paints ONE stage per frame into
+    // the off-screen buffer until complete. Kept once and reused (no per-wake
+    // rebuild).
+    public const STAGE_COUNT = 7;
 
-        waveField(dc, theme);       // §2.11 + §3
-        bezel(dc, theme);           // §2.2 + §3 (also paints rehaut)
-        minuteTrack(dc, theme);     // §2.3
-        textStack(dc, theme);       // §2.9
-        hourMarkers(dc, theme);     // §2.4-2.6
-        subdialLeft(dc, theme);     // §2.7 left (small seconds scale)
-        subdialRight(dc, theme);    // §2.7 right (bronze 12h/60min ring)
-        dateAperture(dc, theme);    // §2.8 (numeral drawn dynamically)
+    // Full render in one pass — only the buffer-unavailable fallback path uses
+    // this (real devices go through drawStage). Order matches drawStage.
+    public function draw(dc as Graphics.Dc, theme as Theme) as Void {
+        for (var s = 0; s < STAGE_COUNT; s++) {
+            drawStage(dc, theme, s);
+        }
+    }
+
+    // Render exactly one stage into dc. Returns true when `stage` was the last.
+    // Each stage is bounded (<~500 draw ops) to stay under the watchdog budget.
+    public function drawStage(dc as Graphics.Dc, theme as Theme, stage as Number) as Boolean {
+        Draw.aa(dc, true);
+        switch (stage) {
+            case 0:
+                dc.setColor(theme.ceramicBase(), theme.ceramicBase());
+                dc.clear();
+                waveBase(dc, theme);                 // §2.11 scanline gloss base
+                break;
+            case 1:
+                waveLines(dc, theme, false);         // §3 crest highlights
+                break;
+            case 2:
+                waveLines(dc, theme, true);          // §3 groove shadows
+                break;
+            case 3:
+                bezel(dc, theme);                    // §2.2 + §3 (paints rehaut)
+                break;
+            case 4:
+                minuteTrack(dc, theme);              // §2.3
+                hourMarkers(dc, theme);              // §2.4-2.6
+                break;
+            case 5:
+                subdialLeft(dc, theme);              // §2.7 left
+                subdialRight(dc, theme);             // §2.7 right
+                break;
+            default:
+                textStack(dc, theme);                // §2.9
+                dateAperture(dc, theme);             // §2.8 (numeral dynamic)
+                return true;
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------
     // Wave field (§2.11): per-scanline gloss-graded base fill, then per row
     // a crest highlight band with the groove shadow immediately below it.
     // ------------------------------------------------------------------
-    private function waveField(dc as Graphics.Dc, theme as Theme) as Void {
-        var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
+    // Stage 0 helper: ridge-face fill with a broad gloss gradient over the top
+    // third. Stride-3 scanlines with a 12-entry precomputed band LUT.
+    private function waveBase(dc as Graphics.Dc, theme as Theme) as Void {
+        var cx = _geo.cx; var cy = _geo.cy;
         var dialR = _geo.rad(_geo.DIAL_R);
-
-        // 1) base: ridge-face fill with a broad gloss gradient over the top
-        //    third (+8-12 luminance points -> blend toward WAVE_HI).
         var ridge = theme.waveRidge();
         var hi = theme.waveHi();
         var topThird = dialR / 3.0;
+        var bands = new Array<Number>[12];
+        for (var b = 0; b < 12; b++) {
+            bands[b] = blend(ridge, hi, GLOSS_MAX * b / 11.0);
+        }
         var lastCol = -1;
+        var stride = 3;
+        dc.setPenWidth(stride + 1);
         var y = (cy - dialR).toNumber() + 1;
         var yEnd = (cy + dialR).toNumber() - 1;
-        dc.setPenWidth(1);
         while (y <= yEnd) {
             var dy = y - cy;
             var half = dialR * dialR - dy * dy;
             if (half > 0) {
                 half = Math.sqrt(half);
-                var gt = 0.0;
+                var col = ridge;
                 if (dy < -topThird) {
-                    gt = ((-dy) - topThird) / (dialR - topThird) * GLOSS_MAX;
+                    var idx = (((-dy) - topThird) / (dialR - topThird) * 11.0).toNumber();
+                    if (idx > 11) { idx = 11; }
+                    col = bands[idx];
                 }
-                var col = blend(ridge, hi, gt);
                 if (col != lastCol) {
                     dc.setColor(col, Graphics.COLOR_TRANSPARENT);
                     lastCol = col;
                 }
                 dc.drawLine(cx - half, y, cx + half, y);
             }
-            y++;
-        }
-
-        // 2) carved rows: crest highlight stroke + groove shadow just below.
-        var pitch = R * _geo.WAVE_PITCH;
-        var hiPen = penW(R * WAVE_HI_W);
-        var grPen = penW(R * WAVE_GR_W);
-        var grOff = R * (WAVE_HI_W + WAVE_GR_W) / 2.0;
-        var nRows = ((dialR + R * _geo.WAVE_AMP) / pitch).toNumber() + 1;
-        for (var i = -nRows; i <= nRows; i++) {
-            // adjacent rows nearly in phase, drifting slowly (±0.04 wavelengths
-            // over ~5 rows) — organic, not cloned sines (§2.11).
-            var ph = 2.0 * Math.PI * WAVE_PH_AMP * Math.sin(i * WAVE_PH_RATE);
-            var rowY = i * pitch;
-            waveRow(dc, rowY, ph, 0.0, hiPen, theme.waveHi(), theme.waveGloss());
-            waveRow(dc, rowY, ph, grOff, grPen, theme.waveGroove(), theme.waveGroove());
+            y += stride;
         }
         dc.setPenWidth(1);
     }
 
-    // One undulating row stroke: y(x) = cy + rowY + A*sin(kx + phase) + yOff.
-    // glossCol replaces baseCol in the upper-left gloss zone (§1 WAVE_HI note).
-    private function waveRow(dc as Graphics.Dc, rowY as Numeric, phase as Numeric,
-                             yOff as Numeric, pen as Number, baseCol as Number,
-                             glossCol as Number) as Void {
+    // Stage 1/2 helper: carved wave rows, one undulating polyline per row.
+    // `groove` false = crest highlight (offset 0), true = groove shadow
+    // (offset grOff below the crest). Split across two frames so neither
+    // pass exceeds the watchdog budget.
+    private function waveLines(dc as Graphics.Dc, theme as Theme, groove as Boolean) as Void {
         var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
         var dialR = _geo.rad(_geo.DIAL_R);
         var rr2 = (dialR - 1.0) * (dialR - 1.0);
         var amp = R * _geo.WAVE_AMP;
         var k = 2.0 * Math.PI / (R * _geo.WAVE_LEN);
         var step = R * WAVE_STEP;
-        dc.setPenWidth(pen);
-        var have = false;
-        var px = 0.0; var py = 0.0;
-        var lastCol = -1;
-        var x = cx - dialR;
-        var xEnd = cx + dialR;
-        while (x <= xEnd) {
-            var yy = cy + rowY + amp * Math.sin(k * (x - cx) + phase) + yOff;
-            var dx = x - cx; var dy = yy - cy;
-            if (dx * dx + dy * dy <= rr2) {
-                if (have) {
-                    var col = (x < cx && yy < cy) ? glossCol : baseCol;
-                    if (col != lastCol) {
-                        dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-                        lastCol = col;
+        var pitch = R * _geo.WAVE_PITCH;
+        var grOff = groove ? R * (WAVE_HI_W + WAVE_GR_W) / 2.0 : 0.0;
+        var grooveCol = theme.waveGroove();
+        var hiCol = theme.waveHi();
+        var glossCol = theme.waveGloss();
+        var nRows = ((dialR + amp) / pitch).toNumber() + 1;
+        dc.setPenWidth(groove ? penW(R * WAVE_GR_W) : penW(R * WAVE_HI_W));
+        for (var i = -nRows; i <= nRows; i++) {
+            var ph = 2.0 * Math.PI * WAVE_PH_AMP * Math.sin(i * WAVE_PH_RATE);
+            var rowY = i * pitch;
+            var have = false;
+            var px = 0.0; var py = 0.0;
+            var x = cx - dialR;
+            var xEnd = cx + dialR;
+            while (x <= xEnd) {
+                var yy = cy + rowY + amp * Math.sin(k * (x - cx) + ph);
+                var dx = x - cx; var dy = yy - cy;
+                if (dx * dx + dy * dy <= rr2) {
+                    if (have) {
+                        if (groove) {
+                            dc.setColor(grooveCol, Graphics.COLOR_TRANSPARENT);
+                            dc.drawLine(px, py + grOff, x, yy + grOff);
+                        } else {
+                            dc.setColor((x < cx && yy < cy) ? glossCol : hiCol,
+                                        Graphics.COLOR_TRANSPARENT);
+                            dc.drawLine(px, py, x, yy);
+                        }
                     }
-                    dc.drawLine(px, py, x, yy);
+                    px = x; py = yy; have = true;
+                } else {
+                    have = false;
                 }
-                px = x; py = yy; have = true;
-            } else {
-                have = false;
+                x += step;
             }
-            x += step;
         }
+        dc.setPenWidth(1);
     }
 
     // ------------------------------------------------------------------
@@ -302,31 +339,16 @@ class DialRenderer {
         var col = theme.flangeWhite();
         var lo = 180 - _geo.FLANGE_GAP_DEG;
         var hi = 180 + _geo.FLANGE_GAP_DEG;
-        // minute ticks every 6 deg
+        // minute ticks every 6 deg. (Half-minute ticks and the quarter-second
+        // dot ring were dropped: sub-pixel detail at watch size, and their
+        // ~180 extra fill ops pushed the static render over the on-device
+        // execution-watchdog budget.)
         for (var m = 0; m < 60; m++) {
             var deg = m * 6;
             if (deg > lo && deg < hi) { continue; }
             var a = deg * Math.PI / 180.0;
             radialBarAt(dc, cx, cy, a, R * _geo.TICK_IN, R * _geo.CHAPTER_R,
                         R * _geo.TICK_W, col);
-        }
-        // half-minute ticks every 6 deg, offset 3
-        for (var s = 0; s < 60; s++) {
-            var degH = s * 6 + 3;
-            if (degH > lo && degH < hi) { continue; }
-            var a = degH * Math.PI / 180.0;
-            radialBarAt(dc, cx, cy, a, R * _geo.TICK_HALF_IN, R * _geo.CHAPTER_R,
-                        R * _geo.TICK_W, col);
-        }
-        // quarter-second dots every 1.5 deg, skipping tick angles (mult of 3)
-        var dr = R * _geo.FLANGE_DOT_D / 2.0;
-        if (dr < 1.0) { dr = 1.0; }
-        for (var q = 1; q < 240; q += 2) {
-            var degQ = q * 1.5;
-            if (degQ > lo && degQ < hi) { continue; }
-            var a = degQ * Math.PI / 180.0;
-            var p = _geo.ptAt(cx, cy, a, R * _geo.FLANGE_R);
-            Draw.dot(dc, p[0], p[1], dr, col);
         }
     }
 
