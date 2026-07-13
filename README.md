@@ -1,4 +1,4 @@
-# 007 First Light — Fenix 8 Pro Watch Face
+# First Light — Fenix 8 Pro Watch Face
 
 A high-fidelity Connect IQ watch face for the **Fenix 8 Pro 47mm** (454×454
 AMOLED) in the style of a classic **professional dive chronograph**.

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <strings>
-    <string id="AppName">007 First Light</string>
+    <string id="AppName">First Light</string>
 
     <!-- Settings titles -->
     <string id="SetDialTheme">Dial theme</string>

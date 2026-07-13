@@ -115,9 +115,9 @@ def title_block(cv):
     # overline
     draw_text(cv, "SUPPORTED ON FENIX 8 PRO", TXT_CX, 172, 22, 1.6,
               bronze, total_w=460)
-    # title
-    draw_text(cv, "007", TXT_CX, 268, 112, 9.0, white, total_w=250)
-    draw_text(cv, "FIRST LIGHT", TXT_CX, 396, 76, 6.4, white, total_w=560)
+    # title (stacked)
+    draw_text(cv, "FIRST", TXT_CX, 302, 98, 8.0, white, total_w=430)
+    draw_text(cv, "LIGHT", TXT_CX, 408, 98, 8.0, white, total_w=430)
     # bronze rule
     thick_line(cv, TXT_CX - 260, 462, TXT_CX + 260, 462, 1.4, bronze, 0.9)
     disc(cv, TXT_CX, 462, 4.0, bronze)

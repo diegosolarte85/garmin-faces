@@ -1,9 +1,9 @@
-# Connect IQ Store listing — 007 First Light
+# Connect IQ Store listing — First Light
 
 Ready-to-paste copy for the Connect IQ Store developer dashboard. Trademark-free
 per Garmin review (no third-party brand names or logos).
 
-- **App name:** 007 First Light
+- **App name:** First Light
 - **App type:** Watch Face
 - **Category:** Watch Faces
 - **Price:** Free
@@ -14,7 +14,7 @@ per Garmin review (no third-party brand names or logos).
 A high-fidelity professional dive-chronograph face: carved ceramic waves, lume markers, bronze seconds.
 
 ## Long description
-007 First Light is a meticulously crafted analog watch face in the style of a
+First Light is a meticulously crafted analog watch face in the style of a
 classic professional dive chronograph.
 
 • Black-ceramic dial with a carved horizontal wave texture
