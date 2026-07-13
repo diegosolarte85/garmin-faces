@@ -14,9 +14,16 @@ class Geometry {
     public var h as Number = 0;
 
     // --- Radial architecture (§2.1) ---
+    // The drawn bezel was removed — the physical Fenix 8 Pro bezel already
+    // carries the dive scale, so drawing our own duplicated it and shrank the
+    // dial. DIAL_FILL scales the radius unit so content designed within DIAL_R
+    // (0.755) fills the screen to ~0.95 of the half-width. All tokens below are
+    // still expressed in the original design space; the scale is applied once
+    // in setBounds so every `R * token` grows together.
+    public const DIAL_FILL   = 1.260;
     public const BEZEL_OUTER = 1.000;
-    public const BEZEL_INNER = 0.775;   // bezel occupies the outer 22.5%
-    public const REHAUT_IN   = 0.755;   // gasket ring between dial and bezel
+    public const BEZEL_INNER = 0.775;   // (legacy — bezel no longer drawn)
+    public const REHAUT_IN   = 0.755;
     public const REHAUT_OUT  = 0.775;
     public const DIAL_R      = 0.755;   // visible wave dial ends here
 
@@ -159,7 +166,8 @@ class Geometry {
         h = height;
         cx = width / 2.0;
         cy = height / 2.0;
-        R = (width < height ? width : height) / 2.0;
+        // Scale the radius unit up (no drawn bezel) so the dial fills the screen.
+        R = ((width < height ? width : height) / 2.0) * DIAL_FILL;
     }
 
     // Absolute radius in pixels for a fraction of R.

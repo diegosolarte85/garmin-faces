@@ -105,7 +105,7 @@ class DialRenderer {
                 waveLines(dc, theme, true);          // §3 groove shadows
                 break;
             case 3:
-                bezel(dc, theme);                    // §2.2 + §3 (paints rehaut)
+                dialEdge(dc, theme);                 // thin finished rim (bezel removed)
                 break;
             case 4:
                 minuteTrack(dc, theme);              // §2.3
@@ -219,6 +219,18 @@ class DialRenderer {
     // Bezel (§2.2 + §3): ceramic band, sheen, rehaut, dot track, batons,
     // numeral ticks, rotated stroked numerals, outlined triangle + pearl.
     // ------------------------------------------------------------------
+    // Thin finished rim at the dial edge — replaces the drawn bezel, which was
+    // removed so the dial fills the screen (the physical Fenix bezel carries the
+    // dive scale). Just a subtle hairline so the round dial has a clean border.
+    private function dialEdge(dc as Graphics.Dc, theme as Theme) as Void {
+        var cx = _geo.cx; var cy = _geo.cy;
+        var dialR = _geo.rad(_geo.DIAL_R);
+        dc.setColor(theme.rehautLine(), Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(penW(_geo.R * 0.006));
+        dc.drawCircle(cx, cy, dialR);
+        dc.setPenWidth(1);
+    }
+
     private function bezel(dc as Graphics.Dc, theme as Theme) as Void {
         var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
         var rOut = _geo.rad(_geo.BEZEL_OUTER);
