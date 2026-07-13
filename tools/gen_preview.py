@@ -105,6 +105,7 @@ THEMES = {
 BEZEL_INNER   = 0.775
 REHAUT_IN     = 0.755
 DIAL_R        = 0.755
+DIAL_FILL     = 1.15   # match Geometry.mc: dial fills screen, no drawn bezel
 
 BZ_NUM_R      = 0.875   # bezel numeral center radius
 BZ_NUM_CAP    = 0.170   # numeral cap height
@@ -151,10 +152,10 @@ PLOT6_W       = 0.085
 PLOT6_H       = 0.050
 PLOT6_R       = 0.667
 
-SUB_OFFSET    = 0.393
-SUB_R         = 0.247
-SUB_SNAIL_R   = 0.160
-BRONZE_OUT    = 0.242
+SUB_OFFSET    = 0.415
+SUB_R         = 0.150
+SUB_SNAIL_R   = 0.095
+BRONZE_OUT    = 0.146
 
 DATE_CY       = 0.531
 DATE_W        = 0.174
@@ -1004,13 +1005,13 @@ def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12"):
     S = size * ss
     cv = Canvas(S)
     c = S / 2.0
-    R = S / 2.0
+    R = (S / 2.0) * DIAL_FILL
     c_glob[0] = c
     T = dict(TOKENS)
     T.update(theme)
 
     paint_background(cv, R, T)
-    paint_bezel(cv, c, R, T)
+    # paint_bezel removed — physical Fenix bezel carries the dive scale
     paint_flange(cv, c, R, T)
     paint_text_stack(cv, c, R, T)
     paint_subdial_left(cv, c, R, T, seconds=s)
