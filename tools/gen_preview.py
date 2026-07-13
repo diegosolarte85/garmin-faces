@@ -742,18 +742,30 @@ def paint_date(cv, c, R, T, text="12", number=True):
 # dial text stack
 # ---------------------------------------------------------------------------
 def draw_sunrise_emblem(cv, cx, cy, R, T):
-    """Lowercase-omega (u03c9) emblem: a generic Greek letter, drawn as a
-    single rounded two-bump stroke (not the trademarked capital-omega logo)."""
+    """Trident emblem — a classic dive-watch motif (Neptune's trident), a
+    generic maritime symbol not owned by any single brand."""
     col = T["TEXT_OMEGA_S"]
-    hw = 0.0052 * R
-    w = 0.076 * R
-    h = 0.062 * R
-    pts = [(0.06, 0.18), (0.00, 0.50), (0.06, 0.82), (0.22, 0.95), (0.37, 0.86),
-           (0.45, 0.60), (0.50, 0.48), (0.55, 0.60), (0.63, 0.86), (0.78, 0.95),
-           (0.94, 0.82), (1.00, 0.50), (0.94, 0.18)]
-    px = [(cx + (u - 0.5) * w, cy + (v - 0.5) * h) for (u, v) in pts]
-    for i in range(len(px) - 1):
-        thick_line(cv, px[i][0], px[i][1], px[i + 1][0], px[i + 1][1], hw, col)
+    hw = 0.0056 * R
+    top = cy - 0.050 * R
+    bot = cy + 0.050 * R
+    sp = 0.027 * R                            # tine spacing
+    # shaft
+    thick_line(cv, cx, top + 0.004 * R, cx, bot, hw, col)
+    # crossbar joining the tines
+    thick_line(cv, cx - sp * 2, top + 0.030 * R,
+               cx + sp * 2, top + 0.030 * R, hw, col)
+    # centre tine (barbed point)
+    thick_line(cv, cx, top - 0.008 * R, cx, top + 0.030 * R, hw, col)
+    disc(cv, cx, top - 0.012 * R, hw * 1.35, col)
+    # side tines: curl outward from the crossbar, then rise to barbed points
+    for s in (-1, 1):
+        stroke_arc(cv, cx + s * sp, top + 0.030 * R, sp, hw,
+                   90 if s > 0 else 270, 180 if s > 0 else 360, col, step=5)
+        thick_line(cv, cx + s * sp * 2, top + 0.030 * R,
+                   cx + s * sp * 2, top - 0.004 * R, hw, col)
+        disc(cv, cx + s * sp * 2, top - 0.008 * R, hw * 1.25, col)
+    # base ball
+    disc(cv, cx, bot + 0.004 * R, hw * 1.7, col)
 
 
 def draw_omega_symbol(cv, cx, cy, R, T):
