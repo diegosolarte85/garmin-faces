@@ -681,116 +681,36 @@ def paint_subdial_left(cv, c, R, T, seconds):
     sx = c - SUB_OFFSET * R
     subdial_base(cv, c, R, T, sx, bronze=False)
     pr = T["SUB_PRINT"]
-    # 5-second ticks (every 30 deg)
     for k in range(12):
-        ang = k * 30.0
-        if k % 2 == 0:
-            continue  # numerals occupy even positions
-        rad = math.radians(ang)
-        p0 = (sx + 0.165 * R * math.sin(rad), c - 0.165 * R * math.cos(rad))
-        p1 = (sx + 0.201 * R * math.sin(rad), c - 0.201 * R * math.cos(rad))
-        thick_line(cv, p0[0], p0[1], p1[0], p1[1], 0.0045 * R, pr)
-    # 1-second dots
-    for k in range(60):
-        if k % 5 == 0:
-            continue
-        rad = math.radians(k * 6.0)
-        disc(cv, sx + 0.187 * R * math.sin(rad), c - 0.187 * R * math.cos(rad),
-             0.003 * R, pr)
-    # numerals 60/10/20/30/40/50, tangentially rotated (base faces center)
-    for num, ang in (("60", 0), ("10", 60), ("20", 120), ("30", 180),
-                     ("40", 240), ("50", 300)):
-        cap = 0.048 * R
-        halfw = 0.0042 * R
-        rad = math.radians(ang)
-        ncx = sx + 0.224 * R * math.sin(rad)
-        ncy = c - 0.224 * R * math.cos(rad)
-        pxv, pyv = math.cos(rad), math.sin(rad)
-        w1 = glyph_adv(num[0]) * cap
-        w2 = glyph_adv(num[1]) * cap
-        gap = 0.10 * cap
-        for ch, off in ((num[0], -(gap + w1) / 2.0), (num[1], (gap + w2) / 2.0)):
-            draw_glyph(cv, ch, ncx + pxv * off, ncy + pyv * off, cap, halfw,
-                       pr, rot_deg=ang)
-    # steel baton hand, no tail
-    ang = seconds * 6.0
-    rad = math.radians(ang)
-    tipx = sx + 0.157 * R * math.sin(rad)
-    tipy = c - 0.157 * R * math.cos(rad)
-    midx = sx + 0.100 * R * math.sin(rad)
-    midy = c - 0.100 * R * math.cos(rad)
-    thick_line(cv, sx, c, midx, midy, 0.010 * R, T["STEEL_MID"])
-    thick_line(cv, sx, c, tipx, tipy, 0.0080 * R, T["STEEL_HI"])
-    disc(cv, sx, c, 0.036 * R, T["STEEL_MID"])
-    disc(cv, sx, c, 0.024 * R, T["STEEL_HI"])
-    disc(cv, sx - 0.008 * R, c - 0.008 * R, 0.010 * R, T["WHITE"], 0.6)
+        rad = math.radians(k * 30.0)
+        w = 0.010 * R if k % 3 == 0 else 0.0055 * R
+        r0 = SUB_R * 0.66 * R; r1 = SUB_R * 0.82 * R
+        thick_line(cv, sx + r0 * math.sin(rad), c - r0 * math.cos(rad),
+                   sx + r1 * math.sin(rad), c - r1 * math.cos(rad), w, pr)
+    ang = math.radians(seconds * 6.0)
+    tl = SUB_R * 0.78 * R
+    thick_line(cv, sx, c, sx + tl * math.sin(ang), c - tl * math.cos(ang),
+               0.0075 * R, T["STEEL_HI"])
+    disc(cv, sx, c, 0.023 * R, T["STEEL_MID"])
+    disc(cv, sx, c, 0.014 * R, T["STEEL_HI"])
+
 
 
 def paint_subdial_right(cv, c, R, T, min_ang, hr_ang):
     sx = c + SUB_OFFSET * R
     subdial_base(cv, c, R, T, sx, bronze=True)
     pr = T["RING_PRINT"]
-    # full-ring-width hairline ticks at odd hours
     for k in range(12):
-        if k % 2 == 0:
-            continue
-        ang = k * 30.0
-        rad = math.radians(ang)
-        p0 = (sx + SUB_SNAIL_R * R * math.sin(rad),
-              c - SUB_SNAIL_R * R * math.cos(rad))
-        p1 = (sx + BRONZE_OUT * R * math.sin(rad),
-              c - BRONZE_OUT * R * math.cos(rad))
-        thick_line(cv, p0[0], p0[1], p1[0], p1[1], 0.0055 * R, pr)
-    # minute dots, four per 5-min sector
-    for k in range(60):
-        if k % 5 == 0:
-            continue
-        rad = math.radians(k * 6.0)
-        disc(cv, sx + 0.174 * R * math.sin(rad), c - 0.174 * R * math.cos(rad),
-             0.004 * R, pr)
-    # numerals 12-2-4-6-8-10 printed black on the bronze, rotated
-    for num, ang in (("12", 0), ("2", 60), ("4", 120), ("6", 180),
-                     ("8", 240), ("10", 300)):
-        cap = 0.046 * R
-        halfw = 0.0040 * R
-        rad = math.radians(ang)
-        ncx = sx + 0.201 * R * math.sin(rad)
-        ncy = c - 0.201 * R * math.cos(rad)
-        pxv, pyv = math.cos(rad), math.sin(rad)
-        if len(num) == 1:
-            draw_glyph(cv, num, ncx, ncy, cap, halfw, pr, rot_deg=ang)
-        else:
-            w1 = glyph_adv(num[0]) * cap
-            w2 = glyph_adv(num[1]) * cap
-            gap = 0.10 * cap
-            for ch, off in ((num[0], -(gap + w1) / 2.0),
-                            (num[1], (gap + w2) / 2.0)):
-                draw_glyph(cv, ch, ncx + pxv * off, ncy + pyv * off, cap,
-                           halfw, pr, rot_deg=ang)
-    # two steel hands (never bronze)
-    def sub_hand(ang_deg, length, hw, lance=False):
-        rad = math.radians(ang_deg)
-        dxv, dyv = math.sin(rad), -math.cos(rad)
-        pxv, pyv = math.cos(rad), math.sin(rad)
-        if lance:
-            body = [
-                (sx + pxv * hw * R, c + pyv * hw * R),
-                (sx + dxv * (length * 0.72) * R + pxv * hw * R,
-                 c + dyv * (length * 0.72) * R + pyv * hw * R),
-                (sx + dxv * length * R, c + dyv * length * R),
-                (sx + dxv * (length * 0.72) * R - pxv * hw * R,
-                 c + dyv * (length * 0.72) * R - pyv * hw * R),
-                (sx - pxv * hw * R, c - pyv * hw * R),
-            ]
-            fill_poly(cv, body, T["STEEL_HI"])
-        else:
-            thick_line(cv, sx, c,
-                       sx + dxv * length * R, c + dyv * length * R,
-                       hw * R, T["STEEL_HI"])
-    sub_hand(min_ang, 0.162, 0.0055)
-    sub_hand(hr_ang, 0.124, 0.012, lance=True)
-    disc(cv, sx, c, 0.029 * R, T["STEEL_MID"])
-    disc(cv, sx, c, 0.019 * R, T["STEEL_HI"])
+        rad = math.radians(k * 30.0)
+        r0 = SUB_SNAIL_R * R; r1 = BRONZE_OUT * R
+        thick_line(cv, sx + r0 * math.sin(rad), c - r0 * math.cos(rad),
+                   sx + r1 * math.sin(rad), c - r1 * math.cos(rad), 0.006 * R, pr)
+    ang = math.radians(min_ang)
+    tl = SUB_R * 0.72 * R
+    thick_line(cv, sx, c, sx + tl * math.sin(ang), c - tl * math.cos(ang),
+               0.0075 * R, T["STEEL_HI"])
+    disc(cv, sx, c, 0.021 * R, T["STEEL_MID"])
+    disc(cv, sx, c, 0.013 * R, T["STEEL_HI"])
 
 
 # ---------------------------------------------------------------------------
@@ -849,28 +769,10 @@ def draw_zro2(cv, cx, cy, R, T):
 
 
 def paint_text_stack(cv, c, R, T):
+    # Decluttered to match the device: Omega mark + red SEAMASTER only.
     draw_omega_symbol(cv, c, c - 0.394 * R, R, T)
-    draw_text(cv, "OMEGA", c, c - 0.313 * R, 0.056 * R, 0.0058 * R,
-              T["TEXT_OMEGA"], total_w=0.282 * R)
-    # red Seamaster script (italic connected cursive approximation)
-    asc = 0.072 * R
-    draw_text(cv, "Seamaster", c, c - 0.233 * R + asc * 0.22, asc,
-              0.0042 * R, T["RED_SCRIPT"], total_w=0.314 * R, font=SCRIPT,
-              shear=0.30)
-    draw_text(cv, "PROFESSIONAL", c, c - 0.126 * R, 0.040 * R, 0.0038 * R,
-              T["TEXT_PROF"], total_w=0.346 * R)
-    draw_zro2(cv, c, c + 0.149 * R, R, T)
-    draw_text(cv, "CO-AXIAL", c, c + 0.247 * R, 0.029 * R, 0.0030 * R,
-              T["TEXT_MID"], total_w=0.338 * R)
-    draw_text(cv, "MASTER CHRONOMETER", c, c + 0.290 * R, 0.031 * R,
-              0.0030 * R, T["TEXT_MID"], total_w=0.394 * R)
-    draw_text(cv, "300m / 1000ft", c, c + 0.335 * R, 0.033 * R, 0.0032 * R,
-              T["TEXT_MID"], total_w=0.298 * R)
-    # SWISS MADE on the arc, flanking the 6 o'clock plot
-    draw_arc_text(cv, "SWISS", c, R, 0.715, 188.5, 0.027 * R, 0.0026 * R,
-                  T["TEXT_DIM"])
-    draw_arc_text(cv, "MADE", c, R, 0.715, 172.0, 0.027 * R, 0.0026 * R,
-                  T["TEXT_DIM"])
+    draw_text(cv, "SEAMASTER", c, c - 0.233 * R, 0.052 * R, 0.0040 * R,
+              T["RED_SCRIPT"], total_w=0.300 * R)
 
 
 # ---------------------------------------------------------------------------
