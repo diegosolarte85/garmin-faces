@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
-    <!-- Pre-baked static dial art (454x454), blitted at runtime like Garmin's
-         first-party faces. Hands + live values are drawn on top. -->
+    <!-- Pre-baked dial art (454x454), blitted at runtime like Garmin's
+         first-party faces. dial_* = active; dim_* = dimmed always-on. -->
     <bitmap id="DialBlack" filename="dial_black_ceramic.png"/>
     <bitmap id="DialDawn" filename="dial_dawn.png"/>
+    <bitmap id="DimBlack" filename="dim_black_ceramic.png"/>
+    <bitmap id="DimDawn" filename="dim_dawn.png"/>
 </drawables>

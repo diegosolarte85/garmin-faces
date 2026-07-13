@@ -105,7 +105,7 @@ THEMES = {
 BEZEL_INNER   = 0.775
 REHAUT_IN     = 0.755
 DIAL_R        = 0.755
-DIAL_FILL     = 1.17   # match Geometry.mc: dial fills screen, no drawn bezel
+DIAL_FILL     = 1.26   # match Geometry.mc: dial fills screen, no drawn bezel
 
 BZ_NUM_R      = 0.875   # bezel numeral center radius
 BZ_NUM_CAP    = 0.170   # numeral cap height
@@ -922,7 +922,7 @@ def paint_hub(cv, c, R, T):
 # ---------------------------------------------------------------------------
 # face assembly
 # ---------------------------------------------------------------------------
-def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True):
+def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True, dim=False):
     S = size * ss
     cv = Canvas(S)
     c = S / 2.0
@@ -930,6 +930,10 @@ def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True):
     c_glob[0] = c
     T = dict(TOKENS)
     T.update(theme)
+    if dim:
+        T = {k: (tuple(int(round(ch * 0.36)) for ch in v)
+                 if isinstance(v, tuple) and len(v) == 3 else v)
+             for k, v in T.items()}
 
     paint_background(cv, R, T)
     # paint_bezel removed — physical Fenix bezel carries the dive scale

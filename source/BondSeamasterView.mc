@@ -18,7 +18,7 @@ class BondSeamasterView extends WatchUi.WatchFace {
     private var _subs as Subdials;
 
     private var _dialBmp as WatchUi.BitmapResource?;
-    private var _dialThemeLoaded as Number = -1;
+    private var _loadedKey as Number = -1;   // theme*2 + (dim?1:0) currently loaded
     private var _lowPower as Boolean = false;
     private var _prevBox as Array<Number>?;
 
@@ -37,9 +37,7 @@ class BondSeamasterView extends WatchUi.WatchFace {
     }
 
     public function onShow() as Void {
-        if (_dialBmp == null || _dialThemeLoaded != _theme.dialTheme) {
-            loadDial();
-        }
+        loadDial();
     }
 
     public function reloadSettings() as Void {
@@ -47,16 +45,26 @@ class BondSeamasterView extends WatchUi.WatchFace {
         loadDial();
     }
 
-    // Load the baked dial for the current theme (cached until the theme changes).
+    // Load the dial matching (theme, power state). Only one 454x454 bitmap is
+    // kept resident — it's swapped on the sleep/wake transition — to stay within
+    // the graphics-memory budget.
     private function loadDial() as Void {
-        var id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDawn : Rez.Drawables.DialBlack;
+        var key = _theme.dialTheme * 2 + (_lowPower ? 1 : 0);
+        if (key == _loadedKey && _dialBmp != null) { return; }
+        var id;
+        if (_lowPower) {
+            id = (_theme.dialTheme == 1) ? Rez.Drawables.DimDawn : Rez.Drawables.DimBlack;
+        } else {
+            id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDawn : Rez.Drawables.DialBlack;
+        }
         _dialBmp = WatchUi.loadResource(id) as WatchUi.BitmapResource;
-        _dialThemeLoaded = _theme.dialTheme;
+        _loadedKey = key;
     }
 
     public function onExitSleep() as Void {
         _lowPower = false;
         _theme.lowPower = false;
+        loadDial();               // swap to the bright dial
         WatchUi.requestUpdate();
     }
 
@@ -64,12 +72,12 @@ class BondSeamasterView extends WatchUi.WatchFace {
         _lowPower = true;
         _theme.lowPower = true;
         _prevBox = null;
+        loadDial();               // swap to the dimmed always-on dial
         WatchUi.requestUpdate();
     }
 
     public function onUpdate(dc as Graphics.Dc) as Void {
         Draw.aa(dc, true);
-        // Static dial: a single blit of the pre-baked art.
         if (_dialBmp != null) {
             dc.drawBitmap(0, 0, _dialBmp);
         } else {
@@ -78,17 +86,22 @@ class BondSeamasterView extends WatchUi.WatchFace {
         }
 
         var clock = System.getClockTime();
-        var day = dayOfMonth();
+        var hourFrac = ((clock.hour % 12) + clock.min / 60.0) / 12.0;
+        var minFrac = (clock.min + clock.sec / 60.0) / 60.0;
+
+        // Always-on: dimmed dial + hour/minute hands only (burn-in-safe).
+        if (_lowPower) {
+            _hands.drawHour(dc, _theme, hourFrac);
+            _hands.drawMinute(dc, _theme, minFrac);
+            _hands.drawHub(dc, _theme);
+            return;
+        }
 
         _subs.drawRight(dc, _theme);
         _subs.drawLeft(dc, _theme, clock.hour, clock.min);
-        _subs.drawDate(dc, _theme, day);
-
-        var hourFrac = ((clock.hour % 12) + clock.min / 60.0) / 12.0;
-        var minFrac = (clock.min + clock.sec / 60.0) / 60.0;
+        _subs.drawDate(dc, _theme, dayOfMonth());
         _hands.drawHour(dc, _theme, hourFrac);
         _hands.drawMinute(dc, _theme, minFrac);
-
         if (showSeconds()) {
             var secFrac = clock.sec / 60.0;
             _hands.drawSeconds(dc, _theme, secFrac);

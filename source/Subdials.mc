@@ -33,20 +33,16 @@ class Subdials {
             case 1: { // heart rate
                 var hr = readHeartRate();
                 if (hr != null) {
-                    label(dc, theme, c, hr.toString());
                     hand(dc, theme, c, clampFrac(hr, 40, 200), theme.poppyRed(), 0.70);
                 } else {
-                    label(dc, theme, c, "--");
                 }
                 break;
             }
             case 2: { // body battery
                 var bb = readBodyBattery();
                 if (bb != null) {
-                    label(dc, theme, c, bb.toString());
                     hand(dc, theme, c, bb / 100.0, theme.lumeGlow(), 0.70);
                 } else {
-                    label(dc, theme, c, "--");
                 }
                 break;
             }
@@ -60,7 +56,6 @@ class Subdials {
         switch (theme.rightSub) {
             case 0: { // battery %
                 var pct = System.getSystemStats().battery;
-                label(dc, theme, c, pct.format("%d"));
                 hand(dc, theme, c, pct / 100.0, theme.accentMain(), 0.70);
                 break;
             }
@@ -68,7 +63,6 @@ class Subdials {
                 var info = ActivityMonitor.getInfo();
                 var steps = (info != null && info.steps != null) ? info.steps : 0;
                 var goal = (info != null && info.stepGoal != null && info.stepGoal > 0) ? info.stepGoal : 10000;
-                label(dc, theme, c, shortNum(steps));
                 hand(dc, theme, c, frac01(steps.toFloat() / goal), theme.accentMain(), 0.70);
                 break;
             }
@@ -82,7 +76,6 @@ class Subdials {
                 if (info != null && info has :activeMinutesWeekGoal && info.activeMinutesWeekGoal != null && info.activeMinutesWeekGoal > 0) {
                     goal = info.activeMinutesWeekGoal;
                 }
-                label(dc, theme, c, am.toString());
                 hand(dc, theme, c, frac01(am.toFloat() / goal), theme.accentMain(), 0.70);
                 break;
             }

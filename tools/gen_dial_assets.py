@@ -36,11 +36,17 @@ def main():
     names = sel or BAKE
     os.makedirs(OUT, exist_ok=True)
     for name in names:
+        # active (bright) dial
         img = render_face(454, THEMES[name], ss=ss, hands=False)
-        path = os.path.join(OUT, "dial_%s.png" % name)
-        write_png(img, path)
-        kb = os.path.getsize(path) // 1024
-        print("wrote %s (%d KB, ss=%d)" % (os.path.relpath(path), kb, ss))
+        p1 = os.path.join(OUT, "dial_%s.png" % name)
+        write_png(img, p1)
+        # dimmed dial for always-on display
+        dimg = render_face(454, THEMES[name], ss=ss, hands=False, dim=True)
+        p2 = os.path.join(OUT, "dim_%s.png" % name)
+        write_png(dimg, p2)
+        print("wrote %s (%d KB) + %s (%d KB), ss=%d" % (
+            os.path.relpath(p1), os.path.getsize(p1) // 1024,
+            os.path.relpath(p2), os.path.getsize(p2) // 1024, ss))
 
 
 if __name__ == "__main__":

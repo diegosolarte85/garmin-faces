@@ -20,7 +20,7 @@ class Geometry {
     // (0.755) fills the screen to ~0.95 of the half-width. All tokens below are
     // still expressed in the original design space; the scale is applied once
     // in setBounds so every `R * token` grows together.
-    public const DIAL_FILL   = 1.170;
+    public const DIAL_FILL   = 1.260;
     public const BEZEL_OUTER = 1.000;
     public const BEZEL_INNER = 0.775;   // (legacy — bezel no longer drawn)
     public const REHAUT_IN   = 0.755;
