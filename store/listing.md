@@ -1,50 +1,54 @@
 # Connect IQ Store listing — 007 First Light
 
-Ready-to-paste copy for the Connect IQ Store developer dashboard. Adjust to your
-own voice; keep within the dashboard's length limits.
+Ready-to-paste copy for the Connect IQ Store developer dashboard. Trademark-free
+per Garmin review (no third-party brand names or logos).
 
 - **App name:** 007 First Light
 - **App type:** Watch Face
 - **Category:** Watch Faces
 - **Price:** Free
 - **Languages:** English
-- **Compatible devices:** Garmin Fenix 8 Pro 47mm (auto-detected from `manifest.xml`)
+- **Compatible devices:** Supported on Fenix 8 Pro (47mm)
 
 ## Short description (1 line)
-A high-fidelity Seamaster-inspired dive chronograph face: ceramic waves, lume hands, bronze seconds.
+A high-fidelity professional dive-chronograph face: carved ceramic waves, lume markers, bronze seconds.
 
 ## Long description
-007 First Light is a meticulously crafted analog watch face inspired by the
-Omega Seamaster Diver 300M Chronograph "007 First Light".
+007 First Light is a meticulously crafted analog watch face in the style of a
+classic professional dive chronograph.
 
-• Black-ceramic dial with the signature laser-engraved wave texture
-• Polished ceramic dive bezel with a white-enamel 60-minute scale and a luminous pip
-• Rhodium broad-arrow hands with white Super-LumiNova-style lume inlays
-• A bronze-gold lollipop central seconds hand that sweeps when your wrist is active
-• True bicompax layout — a left subdial, a bronze-ringed right subdial, and a date window at 6
-• A warm "First Light" dawn sweep when you raise your wrist
+• Black-ceramic dial with a carved horizontal wave texture
+• Rhodium-style broad-arrow hands with white luminous inlays
+• A bronze-gold central seconds hand that sweeps when your wrist is active
+• Bicompax layout — a left subdial, a bronze-ringed right subdial, and a date window at 6
+• A warm "first light" dawn feel, brought to life on your wrist
 
 Make it yours from the settings:
 • Dial theme — Black Ceramic or Dawn First-Light
-• Accent — Bronze (PVD gold) or Poppy Red
+• Accent — Bronze or Poppy Red
 • Left subdial — 24-hour, Heart Rate, Body Battery, or Off
 • Right subdial — Battery, Steps, Active Minutes, or Off
-• Seconds hand and the dawn sweep can be toggled
+• Seconds hand can be toggled
 
-Built for AMOLED with always-on care: the static dial is pre-rendered once and
-the palette dims in always-on mode to protect your display.
+Built for AMOLED with always-on care: the static dial is pre-rendered for crisp,
+full-color quality, and the always-on view stays legible while sparing your display.
 
-Unofficial fan tribute. "Omega", "Seamaster", and "007" are trademarks of their
-respective owners; this face is not affiliated with or endorsed by them.
-
-## What's new (v1.0.0)
-First release: full Seamaster-inspired dial, configurable subdials and accents,
-dawn wrist-raise effect, AMOLED always-on support.
+## What's new (v1.1.0)
+Trademark-free redesign of the dial branding. Full-color bitmap dial (sharper,
+no banding). New vector always-on view (no longer blank). Bright, higher-contrast
+carved waves.
 
 ## Keywords / tags
-seamaster, diver, chronograph, 007, bond, omega, dive, bronze, analog, luxury,
-amoled, fenix 8 pro
+diver, dive watch, chronograph, professional, bronze, wave dial, analog, luxury,
+amoled, first light
 
 ## Support
 - Support URL: https://github.com/diegosolarte85/garmin-faces
 - Issue tracker: https://github.com/diegosolarte85/garmin-faces/issues
+
+## Notes for submission (not shown to users)
+- Dial art contains NO third-party trademarks (no "Omega", "Seamaster", "Ω", "CO-AXIAL",
+  "Master Chronometer", "Swiss Made"). Branding is the neutral "FIRST LIGHT / DIVER".
+- Hero/cover/screenshots re-rendered from the neutral dial.
+- Do not use Garmin's name/logo in marketing; state compatibility only
+  ("Supported on Fenix 8 Pro").

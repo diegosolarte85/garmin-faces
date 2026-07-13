@@ -308,6 +308,9 @@ GLYPHS = {
     "W": ([[(0, 0), (0.22, 1), (0.50, 0.30), (0.78, 1), (1, 0)]], 0.92),
     "X": ([[(0, 0), (1, 1)], [(1, 0), (0, 1)]], 0.66),
     "Z": ([[(0, 0), (1, 0), (0, 1), (1, 1)]], 0.64),
+    "V": ([[(0, 0), (0.5, 1), (1, 0)]], 0.74),
+    "U": ([[(0, 0), (0, 0.72), (0.16, 0.94), (0.5, 1), (0.84, 0.94), (1, 0.72), (1, 0)]], 0.74),
+    "B": ([[(0, 0), (0, 1)], [(0, 0), (0.6, 0), (0.82, 0.14), (0.82, 0.32), (0.6, 0.46), (0, 0.46)], [(0.6, 0.46), (0.88, 0.60), (0.88, 0.84), (0.6, 1), (0, 1)]], 0.72),
     "-": ([[(0.12, 0.5), (0.88, 0.5)]], 0.50),
     "/": ([[(0.85, 0), (0.15, 1)]], 0.50),
     "[": ([[(0.85, 0), (0.30, 0), (0.30, 1), (0.85, 1)]], 0.42),
@@ -738,6 +741,20 @@ def paint_date(cv, c, R, T, text="12", number=True):
 # ---------------------------------------------------------------------------
 # dial text stack
 # ---------------------------------------------------------------------------
+def draw_sunrise_emblem(cv, cx, cy, R, T):
+    """A minimalist rising-sun mark (dawn = 'first light'). No trademarks."""
+    col = T["TEXT_OMEGA_S"]
+    hw = 0.0050 * R
+    rad = 0.032 * R
+    hy = cy + rad * 0.35
+    thick_line(cv, cx - rad * 1.6, hy, cx + rad * 1.6, hy, hw, col)   # horizon
+    stroke_arc(cv, cx, hy, rad, hw, -90, 90, col, step=7)            # sun (top half)
+    for ang in (-42, 0, 42):                                          # rays
+        a = math.radians(ang)
+        thick_line(cv, cx + rad * 1.25 * math.sin(a), hy - rad * 1.25 * math.cos(a),
+                   cx + rad * 1.7 * math.sin(a), hy - rad * 1.7 * math.cos(a), hw * 0.85, col)
+
+
 def draw_omega_symbol(cv, cx, cy, R, T):
     h = 0.069 * R
     w = 0.080 * R
@@ -772,26 +789,17 @@ def draw_zro2(cv, cx, cy, R, T):
 
 
 def paint_text_stack(cv, c, R, T):
-    draw_omega_symbol(cv, c, c - 0.394 * R, R, T)
-    draw_text(cv, "OMEGA", c, c - 0.313 * R, 0.052 * R, 0.0055 * R,
-              T["TEXT_OMEGA"], total_w=0.262 * R)
-    asc = 0.066 * R
-    draw_text(cv, "Seamaster", c, c - 0.233 * R + asc * 0.22, asc,
-              0.0042 * R, T["RED_SCRIPT"], total_w=0.290 * R, font=SCRIPT,
-              shear=0.30)
-    draw_text(cv, "PROFESSIONAL", c, c - 0.126 * R, 0.036 * R, 0.0036 * R,
-              T["TEXT_PROF"], total_w=0.320 * R)
-    draw_zro2(cv, c, c + 0.149 * R, R, T)
-    draw_text(cv, "CO-AXIAL", c, c + 0.247 * R, 0.029 * R, 0.0030 * R,
+    draw_sunrise_emblem(cv, c, c - 0.400 * R, R, T)
+    draw_text(cv, "FIRST LIGHT", c, c - 0.300 * R, 0.050 * R, 0.0052 * R,
+              T["TEXT_OMEGA"], total_w=0.340 * R)
+    draw_text(cv, "DIVER", c, c - 0.205 * R, 0.052 * R, 0.0048 * R,
+              T["RED_SCRIPT"], total_w=0.150 * R)
+    draw_text(cv, "PROFESSIONAL", c, c - 0.118 * R, 0.034 * R, 0.0034 * R,
+              T["TEXT_PROF"], total_w=0.300 * R)
+    draw_text(cv, "CHRONOMETER", c, c + 0.255 * R, 0.030 * R, 0.0030 * R,
               T["TEXT_MID"], total_w=0.320 * R)
-    draw_text(cv, "MASTER CHRONOMETER", c, c + 0.290 * R, 0.029 * R,
-              0.0030 * R, T["TEXT_MID"], total_w=0.372 * R)
-    draw_text(cv, "300m / 1000ft", c, c + 0.335 * R, 0.031 * R, 0.0032 * R,
-              T["TEXT_MID"], total_w=0.280 * R)
-    draw_arc_text(cv, "SWISS", c, R, 0.715, 188.5, 0.026 * R, 0.0026 * R,
-                  T["TEXT_DIM"])
-    draw_arc_text(cv, "MADE", c, R, 0.715, 172.0, 0.026 * R, 0.0026 * R,
-                  T["TEXT_DIM"])
+    draw_text(cv, "300m / 1000ft", c, c + 0.305 * R, 0.030 * R, 0.0030 * R,
+              T["TEXT_MID"], total_w=0.270 * R)
 
 
 # ---------------------------------------------------------------------------
