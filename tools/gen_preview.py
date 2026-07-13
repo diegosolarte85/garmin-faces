@@ -742,30 +742,57 @@ def paint_date(cv, c, R, T, text="12", number=True):
 # dial text stack
 # ---------------------------------------------------------------------------
 def draw_sunrise_emblem(cv, cx, cy, R, T):
-    """Trident emblem — a classic dive-watch motif (Neptune's trident), a
-    generic maritime symbol not owned by any single brand."""
-    col = T["TEXT_OMEGA_S"]
-    hw = 0.0056 * R
-    top = cy - 0.050 * R
-    bot = cy + 0.050 * R
-    sp = 0.027 * R                            # tine spacing
-    # shaft
-    thick_line(cv, cx, top + 0.004 * R, cx, bot, hw, col)
-    # crossbar joining the tines
-    thick_line(cv, cx - sp * 2, top + 0.030 * R,
-               cx + sp * 2, top + 0.030 * R, hw, col)
-    # centre tine (barbed point)
-    thick_line(cv, cx, top - 0.008 * R, cx, top + 0.030 * R, hw, col)
-    disc(cv, cx, top - 0.012 * R, hw * 1.35, col)
-    # side tines: curl outward from the crossbar, then rise to barbed points
-    for s in (-1, 1):
-        stroke_arc(cv, cx + s * sp, top + 0.030 * R, sp, hw,
-                   90 if s > 0 else 270, 180 if s > 0 else 360, col, step=5)
-        thick_line(cv, cx + s * sp * 2, top + 0.030 * R,
-                   cx + s * sp * 2, top - 0.004 * R, hw, col)
-        disc(cv, cx + s * sp * 2, top - 0.008 * R, hw * 1.25, col)
-    # base ball
-    disc(cv, cx, bot + 0.004 * R, hw * 1.7, col)
+    """Golden trident emblem — Neptune's trident, a generic maritime motif
+    (unowned). Curved splayed prongs and a rounded bowl (no square crossbar),
+    drawn in warm gold with a soft highlight sheen for a cast-metal look."""
+    gold = (0xCB, 0xA1, 0x55)
+    gold_hi = (0xF3, 0xDA, 0x99)
+    hw = 0.0050 * R
+
+    def P(u, v):
+        return (cx + u * R, cy + v * R)
+
+    def qbez(p0, p1, p2, n=18):
+        out = []
+        for i in range(n + 1):
+            t = i / n
+            mt = 1.0 - t
+            out.append((mt * mt * p0[0] + 2 * mt * t * p1[0] + t * t * p2[0],
+                        mt * mt * p0[1] + 2 * mt * t * p1[1] + t * t * p2[1]))
+        return out
+
+    def stroke(pts, w, col, dx=0.0, dy=0.0):
+        for i in range(len(pts) - 1):
+            thick_line(cv, pts[i][0] + dx, pts[i][1] + dy,
+                       pts[i + 1][0] + dx, pts[i + 1][1] + dy, w, col)
+
+    def spear(tip, hwid=0.0090, up=0.013, down=0.011, col=gold):
+        ax, ay = tip
+        fill_poly(cv, [(ax, ay - up * R),
+                       (ax - hwid * R, ay + down * R),
+                       (ax + hwid * R, ay + down * R)], col)
+
+    # shaft + base ball
+    disc(cv, *P(0.0, 0.052), hw * 1.9, gold)
+    stroke([P(0.0, 0.052), P(0.0, -0.004)], hw, gold)
+    # rounded bowl joining the three prong roots (shallow U, no hard corners)
+    bowl = qbez(P(-0.052, -0.014), P(0.0, 0.030), P(0.052, -0.014), 22)
+    stroke(bowl, hw, gold)
+    # centre prong
+    stroke([P(0.0, -0.004), P(0.0, -0.050)], hw, gold)
+    spear(P(0.0, -0.050))
+    # outer prongs splay outward then rise (curved, not straight)
+    left = qbez(P(-0.052, -0.014), P(-0.074, -0.038), P(-0.050, -0.050), 20)
+    right = qbez(P(0.052, -0.014), P(0.074, -0.038), P(0.050, -0.050), 20)
+    stroke(left, hw, gold)
+    stroke(right, hw, gold)
+    spear(P(-0.050, -0.050))
+    spear(P(0.050, -0.050))
+    # highlight sheen: thin lighter pass offset up-left
+    stroke([P(0.0, 0.050), P(0.0, -0.004)], hw * 0.42, gold_hi, -0.004 * R, -0.006 * R)
+    stroke(bowl, hw * 0.42, gold_hi, -0.004 * R, -0.006 * R)
+    stroke(left, hw * 0.42, gold_hi, -0.004 * R, -0.006 * R)
+    stroke([P(0.0, -0.004), P(0.0, -0.050)], hw * 0.42, gold_hi, -0.004 * R, -0.006 * R)
 
 
 def draw_omega_symbol(cv, cx, cy, R, T):
@@ -943,7 +970,7 @@ def paint_hub(cv, c, R, T):
 # ---------------------------------------------------------------------------
 # face assembly
 # ---------------------------------------------------------------------------
-def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True, dim=False):
+def render_face(size, theme, ss=3, h=8, m=20, s=40, date="12", hands=True, dim=False):
     S = size * ss
     cv = Canvas(S)
     c = S / 2.0
