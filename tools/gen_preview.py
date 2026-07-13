@@ -742,17 +742,18 @@ def paint_date(cv, c, R, T, text="12", number=True):
 # dial text stack
 # ---------------------------------------------------------------------------
 def draw_sunrise_emblem(cv, cx, cy, R, T):
-    """A minimalist rising-sun mark (dawn = 'first light'). No trademarks."""
+    """Lowercase-omega (u03c9) emblem: a generic Greek letter, drawn as a
+    single rounded two-bump stroke (not the trademarked capital-omega logo)."""
     col = T["TEXT_OMEGA_S"]
-    hw = 0.0050 * R
-    rad = 0.032 * R
-    hy = cy + rad * 0.35
-    thick_line(cv, cx - rad * 1.6, hy, cx + rad * 1.6, hy, hw, col)   # horizon
-    stroke_arc(cv, cx, hy, rad, hw, -90, 90, col, step=7)            # sun (top half)
-    for ang in (-42, 0, 42):                                          # rays
-        a = math.radians(ang)
-        thick_line(cv, cx + rad * 1.25 * math.sin(a), hy - rad * 1.25 * math.cos(a),
-                   cx + rad * 1.7 * math.sin(a), hy - rad * 1.7 * math.cos(a), hw * 0.85, col)
+    hw = 0.0052 * R
+    w = 0.076 * R
+    h = 0.062 * R
+    pts = [(0.06, 0.18), (0.00, 0.50), (0.06, 0.82), (0.22, 0.95), (0.37, 0.86),
+           (0.45, 0.60), (0.50, 0.48), (0.55, 0.60), (0.63, 0.86), (0.78, 0.95),
+           (0.94, 0.82), (1.00, 0.50), (0.94, 0.18)]
+    px = [(cx + (u - 0.5) * w, cy + (v - 0.5) * h) for (u, v) in pts]
+    for i in range(len(px) - 1):
+        thick_line(cv, px[i][0], px[i][1], px[i + 1][0], px[i + 1][1], hw, col)
 
 
 def draw_omega_symbol(cv, cx, cy, R, T):
