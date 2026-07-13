@@ -769,10 +769,26 @@ def draw_zro2(cv, cx, cy, R, T):
 
 
 def paint_text_stack(cv, c, R, T):
-    # Decluttered to match the device: Omega mark + red SEAMASTER only.
     draw_omega_symbol(cv, c, c - 0.394 * R, R, T)
-    draw_text(cv, "SEAMASTER", c, c - 0.233 * R, 0.052 * R, 0.0040 * R,
-              T["RED_SCRIPT"], total_w=0.300 * R)
+    draw_text(cv, "OMEGA", c, c - 0.313 * R, 0.052 * R, 0.0055 * R,
+              T["TEXT_OMEGA"], total_w=0.262 * R)
+    asc = 0.066 * R
+    draw_text(cv, "Seamaster", c, c - 0.233 * R + asc * 0.22, asc,
+              0.0042 * R, T["RED_SCRIPT"], total_w=0.290 * R, font=SCRIPT,
+              shear=0.30)
+    draw_text(cv, "PROFESSIONAL", c, c - 0.126 * R, 0.036 * R, 0.0036 * R,
+              T["TEXT_PROF"], total_w=0.320 * R)
+    draw_zro2(cv, c, c + 0.149 * R, R, T)
+    draw_text(cv, "CO-AXIAL", c, c + 0.247 * R, 0.029 * R, 0.0030 * R,
+              T["TEXT_MID"], total_w=0.320 * R)
+    draw_text(cv, "MASTER CHRONOMETER", c, c + 0.290 * R, 0.029 * R,
+              0.0030 * R, T["TEXT_MID"], total_w=0.372 * R)
+    draw_text(cv, "300m / 1000ft", c, c + 0.335 * R, 0.031 * R, 0.0032 * R,
+              T["TEXT_MID"], total_w=0.280 * R)
+    draw_arc_text(cv, "SWISS", c, R, 0.715, 188.5, 0.026 * R, 0.0026 * R,
+                  T["TEXT_DIM"])
+    draw_arc_text(cv, "MADE", c, R, 0.715, 172.0, 0.026 * R, 0.0026 * R,
+                  T["TEXT_DIM"])
 
 
 # ---------------------------------------------------------------------------

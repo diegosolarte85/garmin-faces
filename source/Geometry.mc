@@ -155,7 +155,7 @@ class Geometry {
     public const HUB_SLOT_W  = 0.009;      // dark slot across the cap
 
     // --- Wave field (§2.11) ---
-    public const WAVE_PITCH = 0.090;       // crest-to-crest row pitch (~17 rows: calmer, less busy)
+    public const WAVE_PITCH = 0.075;       // crest-to-crest row pitch (~20 rows: finer detail)
     public const WAVE_AMP   = 0.032;       // undulation amplitude (flatter, more refined)
     public const WAVE_LEN   = 0.560;       // undulation wavelength
 

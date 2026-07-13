@@ -19,6 +19,7 @@ using Toybox.Math;
 // numbers that are not shared tokens live here as scalar consts with § refs.
 class DialRenderer {
     private var _geo as Geometry;
+    private var _glyphs as Glyphs;
 
     // --- spec-local scalars (fractions of R unless noted) ---
     private const WAVE_HI_W    = 0.014; // §3 crest highlight stroke width
@@ -70,6 +71,7 @@ class DialRenderer {
 
     public function initialize(geo as Geometry) {
         _geo = geo;
+        _glyphs = new Glyphs();
     }
 
     // Static art entry point — called once into the buffered bitmap.
@@ -78,7 +80,7 @@ class DialRenderer {
     // execution watchdog, so BondSeamasterView paints ONE stage per frame into
     // the off-screen buffer until complete. Kept once and reused (no per-wake
     // rebuild).
-    public const STAGE_COUNT = 7;
+    public const STAGE_COUNT = 8;
 
     // Full render in one pass — only the buffer-unavailable fallback path uses
     // this (real devices go through drawStage). Order matches drawStage.
@@ -115,8 +117,11 @@ class DialRenderer {
                 subdialLeft(dc, theme);              // §2.7 left
                 subdialRight(dc, theme);             // §2.7 right
                 break;
+            case 6:
+                upperText(dc, theme);                // §2.9 Ω + OMEGA / SEAMASTER / PROFESSIONAL
+                break;
             default:
-                textStack(dc, theme);                // §2.9
+                lowerText(dc, theme);                // §2.9 [ZrO2] / CO-AXIAL / MASTER CHRONOMETER / 300m / SWISS MADE
                 dateAperture(dc, theme);             // §2.8 (numeral dynamic)
                 return true;
         }
@@ -525,14 +530,34 @@ class DialRenderer {
     // [ZrO2] + CO-AXIAL / MASTER CHRONOMETER / 300m stack below, SWISS MADE
     // flanking the 6 o'clock plot on the flange arc.
     // ------------------------------------------------------------------
-    private function textStack(dc as Graphics.Dc, theme as Theme) as Void {
+    // §2.9 upper print — rendered with the crisp vector font (Glyphs) so the
+    // fine text stays legible and doesn't collide the way system fonts did.
+    private function upperText(dc as Graphics.Dc, theme as Theme) as Void {
         var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
-        // Decluttered for on-device legibility: system fonts render far larger
-        // than the vector mockup, so the 9-line print collided into a jumble.
-        // Keep only the two identity elements — the Ω mark and the red brand
-        // line — both clear of the hands, subdials and date.
         omegaMark(dc, theme, cx, cy - R * _geo.TXT_OMEGA_SYM);
-        line(dc, cx, cy - R * _geo.TXT_SEAMASTER, theme.poppyRed(), "SEAMASTER");
+        _glyphs.draw(dc, "OMEGA", cx, cy - R * _geo.LOGO_R, R * 0.052,
+                     penW(R * 0.0055), theme.textHi(), R * 0.012);
+        _glyphs.draw(dc, "SEAMASTER", cx, cy - R * _geo.TXT_SEAMASTER, R * 0.045,
+                     penW(R * 0.0050), theme.poppyRed(), R * 0.010);
+        _glyphs.draw(dc, "PROFESSIONAL", cx, cy - R * _geo.TXT_PROF, R * 0.034,
+                     penW(R * 0.0040), theme.textMid(), R * 0.009);
+    }
+
+    // §2.9 lower print.
+    private function lowerText(dc as Graphics.Dc, theme as Theme) as Void {
+        var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
+        _glyphs.draw(dc, "[ZrO2]", cx, cy + R * _geo.TXT_ZRO2, R * 0.030,
+                     penW(R * 0.0038), theme.zro2Gray(), R * 0.006);
+        _glyphs.draw(dc, "CO-AXIAL", cx, cy + R * _geo.TXT_COAXIAL, R * 0.029,
+                     penW(R * 0.0036), theme.textMid(), R * 0.007);
+        _glyphs.draw(dc, "MASTER CHRONOMETER", cx, cy + R * _geo.TXT_MASTER, R * 0.029,
+                     penW(R * 0.0036), theme.textMid(), R * 0.005);
+        _glyphs.draw(dc, "300m / 1000ft", cx, cy + R * _geo.TXT_DEPTH, R * 0.031,
+                     penW(R * 0.0038), theme.textMid(), R * 0.006);
+        var pS = _geo.ptFrac(0.5 + SWISS_OFF, _geo.TXT_SWISS_R);
+        var pM = _geo.ptFrac(0.5 - SWISS_OFF, _geo.TXT_SWISS_R);
+        _glyphs.draw(dc, "SWISS", pS[0], pS[1], R * 0.026, penW(R * 0.0030), theme.textDim(), R * 0.005);
+        _glyphs.draw(dc, "MADE", pM[0], pM[1], R * 0.026, penW(R * 0.0030), theme.textDim(), R * 0.005);
     }
 
     private function line(dc as Graphics.Dc, x as Numeric, y as Numeric,
