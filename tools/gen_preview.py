@@ -105,7 +105,7 @@ THEMES = {
 BEZEL_INNER   = 0.775
 REHAUT_IN     = 0.755
 DIAL_R        = 0.755
-DIAL_FILL     = 1.15   # match Geometry.mc: dial fills screen, no drawn bezel
+DIAL_FILL     = 1.17   # match Geometry.mc: dial fills screen, no drawn bezel
 
 BZ_NUM_R      = 0.875   # bezel numeral center radius
 BZ_NUM_CAP    = 0.170   # numeral cap height
@@ -677,7 +677,7 @@ def subdial_base(cv, c, R, T, sx, bronze):
             p[0] = col[0]; p[1] = col[1]; p[2] = col[2]; p[3] = 255
 
 
-def paint_subdial_left(cv, c, R, T, seconds):
+def paint_subdial_left(cv, c, R, T, seconds, hand=True):
     sx = c - SUB_OFFSET * R
     subdial_base(cv, c, R, T, sx, bronze=False)
     pr = T["SUB_PRINT"]
@@ -687,16 +687,17 @@ def paint_subdial_left(cv, c, R, T, seconds):
         r0 = SUB_R * 0.66 * R; r1 = SUB_R * 0.82 * R
         thick_line(cv, sx + r0 * math.sin(rad), c - r0 * math.cos(rad),
                    sx + r1 * math.sin(rad), c - r1 * math.cos(rad), w, pr)
-    ang = math.radians(seconds * 6.0)
-    tl = SUB_R * 0.78 * R
-    thick_line(cv, sx, c, sx + tl * math.sin(ang), c - tl * math.cos(ang),
-               0.0075 * R, T["STEEL_HI"])
-    disc(cv, sx, c, 0.023 * R, T["STEEL_MID"])
-    disc(cv, sx, c, 0.014 * R, T["STEEL_HI"])
+    if hand:
+        ang = math.radians(seconds * 6.0)
+        tl = SUB_R * 0.78 * R
+        thick_line(cv, sx, c, sx + tl * math.sin(ang), c - tl * math.cos(ang),
+                   0.0075 * R, T["STEEL_HI"])
+        disc(cv, sx, c, 0.023 * R, T["STEEL_MID"])
+        disc(cv, sx, c, 0.014 * R, T["STEEL_HI"])
 
 
 
-def paint_subdial_right(cv, c, R, T, min_ang, hr_ang):
+def paint_subdial_right(cv, c, R, T, min_ang, hr_ang, hand=True):
     sx = c + SUB_OFFSET * R
     subdial_base(cv, c, R, T, sx, bronze=True)
     pr = T["RING_PRINT"]
@@ -705,18 +706,19 @@ def paint_subdial_right(cv, c, R, T, min_ang, hr_ang):
         r0 = SUB_SNAIL_R * R; r1 = BRONZE_OUT * R
         thick_line(cv, sx + r0 * math.sin(rad), c - r0 * math.cos(rad),
                    sx + r1 * math.sin(rad), c - r1 * math.cos(rad), 0.006 * R, pr)
-    ang = math.radians(min_ang)
-    tl = SUB_R * 0.72 * R
-    thick_line(cv, sx, c, sx + tl * math.sin(ang), c - tl * math.cos(ang),
-               0.0075 * R, T["STEEL_HI"])
-    disc(cv, sx, c, 0.021 * R, T["STEEL_MID"])
-    disc(cv, sx, c, 0.013 * R, T["STEEL_HI"])
+    if hand:
+        ang = math.radians(min_ang)
+        tl = SUB_R * 0.72 * R
+        thick_line(cv, sx, c, sx + tl * math.sin(ang), c - tl * math.cos(ang),
+                   0.0075 * R, T["STEEL_HI"])
+        disc(cv, sx, c, 0.021 * R, T["STEEL_MID"])
+        disc(cv, sx, c, 0.013 * R, T["STEEL_HI"])
 
 
 # ---------------------------------------------------------------------------
 # date window
 # ---------------------------------------------------------------------------
-def paint_date(cv, c, R, T, text="12"):
+def paint_date(cv, c, R, T, text="12", number=True):
     cy = c + DATE_CY * R
     fill_poly(cv, rrect_pts(c, cy, DATE_W * R, DATE_H * R, DATE_CR * R),
               T["DATE_FRAME"])
@@ -728,8 +730,9 @@ def paint_date(cv, c, R, T, text="12"):
     thick_line(cv, c - aw / 2.0 + 0.012 * R, cy - ah / 2.0 + 0.004 * R,
                c + aw / 2.0 - 0.012 * R, cy - ah / 2.0 + 0.004 * R,
                0.0022 * R, T["DATE_SPEC"])
-    draw_text(cv, text, c, cy + 0.004 * R, DATE_NUM_H * R, 0.0105 * R,
-              T["DATE_NUMERAL"], total_w=0.128 * R)
+    if number:
+        draw_text(cv, text, c, cy + 0.004 * R, DATE_NUM_H * R, 0.0105 * R,
+                  T["DATE_NUMERAL"], total_w=0.128 * R)
 
 
 # ---------------------------------------------------------------------------
@@ -919,7 +922,7 @@ def paint_hub(cv, c, R, T):
 # ---------------------------------------------------------------------------
 # face assembly
 # ---------------------------------------------------------------------------
-def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12"):
+def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True):
     S = size * ss
     cv = Canvas(S)
     c = S / 2.0
@@ -932,18 +935,19 @@ def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12"):
     # paint_bezel removed — physical Fenix bezel carries the dive scale
     paint_flange(cv, c, R, T)
     paint_text_stack(cv, c, R, T)
-    paint_subdial_left(cv, c, R, T, seconds=s)
-    paint_subdial_right(cv, c, R, T, min_ang=66.0, hr_ang=30.0)
-    paint_date(cv, c, R, T, date)
+    paint_subdial_left(cv, c, R, T, seconds=s, hand=hands)
+    paint_subdial_right(cv, c, R, T, min_ang=66.0, hr_ang=30.0, hand=hands)
+    paint_date(cv, c, R, T, date, number=hands)
     paint_markers(cv, c, R, T)
 
-    hour_ang = ((h % 12) + m / 60.0 + s / 3600.0) * 30.0
-    min_ang = (m + s / 60.0) * 6.0
-    sec_ang = s * 6.0
-    paint_hour_hand(cv, c, R, T, hour_ang)
-    paint_minute_hand(cv, c, R, T, min_ang)
-    paint_chrono_hand(cv, c, R, T, sec_ang)
-    paint_hub(cv, c, R, T)
+    if hands:
+        hour_ang = ((h % 12) + m / 60.0 + s / 3600.0) * 30.0
+        min_ang = (m + s / 60.0) * 6.0
+        sec_ang = s * 6.0
+        paint_hour_hand(cv, c, R, T, hour_ang)
+        paint_minute_hand(cv, c, R, T, min_ang)
+        paint_chrono_hand(cv, c, R, T, sec_ang)
+        paint_hub(cv, c, R, T)
 
     return downsample(cv, size, ss)
 

@@ -16,10 +16,11 @@
         <!-- Reference target: Fenix 8 Pro 47mm (454x454 round AMOLED).
              Geometry is resolution-independent; add more round AMOLED
              products here as they are validated. -->
+        <!-- 454x454 AMOLED products only — the baked dial art is 454x454.
+             (fenix843mm is 416x416; add a scaled asset before re-enabling it.) -->
         <iq:products>
             <iq:product id="fenix8pro47mm"/>
             <iq:product id="fenix847mm"/>
-            <iq:product id="fenix843mm"/>
         </iq:products>
 
         <!-- Minimal scope: time, system stats (battery) and ActivityMonitor
