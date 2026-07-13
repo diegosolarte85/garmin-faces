@@ -25,9 +25,9 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "store", "screenshots")
 # ---------------------------------------------------------------------------
 TOKENS = {
     "CERAMIC_BASE": (0x0A, 0x0A, 0x0B),
-    "WAVE_RIDGE":   (0x12, 0x12, 0x15),
-    "WAVE_HI":      (0x52, 0x52, 0x55),
-    "WAVE_HI2":     (0x6A, 0x6A, 0x6C),   # upper-left gloss zone crest
+    "WAVE_RIDGE":   (0x0D, 0x0D, 0x10),
+    "WAVE_HI":      (0x68, 0x68, 0x6C),
+    "WAVE_HI2":     (0x84, 0x84, 0x88),   # upper-left gloss zone crest
     "WAVE_GROOVE":  (0x02, 0x02, 0x03),
     "BEZEL_BLACK":  (0x06, 0x06, 0x08),
     "BEZEL_SHEEN1": (0x1E, 0x20, 0x23),
@@ -427,7 +427,7 @@ c_glob = [0.0]  # set per render (draw_arc_text needs the canvas center)
 def paint_background(cv, R, T):
     S = cv.s
     c = S / 2.0
-    P = 0.145 * R          # wave row pitch (~10 bold carved waves across)
+    P = 0.100 * R          # finer wave pitch (~14 carved waves across)
     A = 0.058 * R          # undulation amplitude
     KX = 2 * math.pi / (0.820 * R)
     ridge = T["WAVE_RIDGE"]; hi = T["WAVE_HI"]; hi2 = T["WAVE_HI2"]
@@ -931,7 +931,7 @@ def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True, dim=F
     T = dict(TOKENS)
     T.update(theme)
     if dim:
-        T = {k: (tuple(int(round(ch * 0.36)) for ch in v)
+        T = {k: (tuple(int(round(ch * 0.60)) for ch in v)
                  if isinstance(v, tuple) and len(v) == 3 else v)
              for k, v in T.items()}
 
