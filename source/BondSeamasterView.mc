@@ -102,28 +102,29 @@ class BondSeamasterView extends WatchUi.WatchFace {
         _hands.drawHub(dc, _theme);
     }
 
-    // Always-on face: black + dim-blue outlined markers/subdials + bright hands.
+    // Always-on face: black + glowing lume hour markers + bright hands.
+    // Few lit pixels (burn-in safe) but reads like a real diver's lume at night.
     private function drawAod(dc as Graphics.Dc, hourFrac as Float, minFrac as Float) as Void {
         var cx = _geo.cx; var cy = _geo.cy;
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
-        var blue = 0x3C6EE0;
 
-        // 12 hollow hour markers (double dot at 12)
-        dc.setColor(blue, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth(3);
-        var mr = _geo.rad(_geo.MARKER_DOT_R);
-        for (var h = 0; h < 12; h++) {
+        // Refined lume tones (Super-LumiNova-style teal glow), dim for burn-in.
+        var lume = 0x59B6A4;      // hour markers
+        var lume12 = 0xB4ECDC;    // brighter 12 o'clock reference
+        var dot = _geo.rad(0.026);
+
+        for (var h = 1; h < 12; h++) {
             var p = _geo.ptFrac(h / 12.0, _geo.MARKER_R);
-            dc.drawCircle(p[0], p[1], mr);
+            dc.setColor(lume, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(p[0], p[1], dot);
         }
-        // subdial + date outlines
-        dc.setPenWidth(2);
-        var l = _geo.leftSubCenter();
-        var r = _geo.rightSubCenter();
-        var sr = _geo.rad(_geo.SUB_R);
-        dc.drawCircle(l[0], l[1], sr);
-        dc.drawCircle(r[0], r[1], sr);
+        // 12 o'clock: an upright lume baton so the face is instantly oriented.
+        var top = _geo.ptFrac(0.0, _geo.MARKER_R);
+        var bw = dot * 1.5;
+        var bh = dot * 3.0;
+        dc.setColor(lume12, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(top[0] - bw / 2.0, top[1] - bh / 2.0, bw, bh, dot * 0.7);
 
         // bright hands (draw in active palette so they read on black)
         _theme.lowPower = false;
@@ -131,6 +132,10 @@ class BondSeamasterView extends WatchUi.WatchFace {
         _hands.drawMinute(dc, _theme, minFrac);
         _hands.drawHub(dc, _theme);
         _theme.lowPower = true;
+
+        // subtle gold center pip echoing the trident accent
+        dc.setColor(0xC8A05A, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(cx, cy, dot * 0.5);
     }
 
     // Once-per-second seconds tick (active): repaint only the second-hand region.
