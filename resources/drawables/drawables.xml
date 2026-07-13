@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <drawables>
     <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
-    <!-- Pre-baked dial art (454x454), blitted at runtime like Garmin's
-         first-party faces. dial_* = active; dim_* = dimmed always-on. -->
-    <bitmap id="DialBlack" filename="dial_black_ceramic.png"/>
-    <bitmap id="DialDawn" filename="dial_dawn.png"/>
-    <bitmap id="DimBlack" filename="dim_black_ceramic.png"/>
-    <bitmap id="DimDawn" filename="dim_dawn.png"/>
+    <!-- Pre-baked dial art (454x454). packingFormat="png" keeps full color
+         depth (no palette dithering) so the smooth waves/gradients stay clean
+         on-device. Always-on is drawn as sparse vector, so no dim bitmaps. -->
+    <bitmap id="DialBlack" filename="dial_black_ceramic.png" packingFormat="png"/>
+    <bitmap id="DialDawn" filename="dial_dawn.png" packingFormat="png"/>
 </drawables>

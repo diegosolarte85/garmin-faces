@@ -45,26 +45,18 @@ class BondSeamasterView extends WatchUi.WatchFace {
         loadDial();
     }
 
-    // Load the dial matching (theme, power state). Only one 454x454 bitmap is
-    // kept resident — it's swapped on the sleep/wake transition — to stay within
-    // the graphics-memory budget.
+    // Load the bright baked dial for the current theme (active mode only —
+    // always-on is drawn as sparse vector, no bitmap).
     private function loadDial() as Void {
-        var key = _theme.dialTheme * 2 + (_lowPower ? 1 : 0);
-        if (key == _loadedKey && _dialBmp != null) { return; }
-        var id;
-        if (_lowPower) {
-            id = (_theme.dialTheme == 1) ? Rez.Drawables.DimDawn : Rez.Drawables.DimBlack;
-        } else {
-            id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDawn : Rez.Drawables.DialBlack;
-        }
+        if (_theme.dialTheme == _loadedKey && _dialBmp != null) { return; }
+        var id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDawn : Rez.Drawables.DialBlack;
         _dialBmp = WatchUi.loadResource(id) as WatchUi.BitmapResource;
-        _loadedKey = key;
+        _loadedKey = _theme.dialTheme;
     }
 
     public function onExitSleep() as Void {
         _lowPower = false;
         _theme.lowPower = false;
-        loadDial();               // swap to the bright dial
         WatchUi.requestUpdate();
     }
 
@@ -72,31 +64,31 @@ class BondSeamasterView extends WatchUi.WatchFace {
         _lowPower = true;
         _theme.lowPower = true;
         _prevBox = null;
-        loadDial();               // swap to the dimmed always-on dial
         WatchUi.requestUpdate();
     }
 
     public function onUpdate(dc as Graphics.Dc) as Void {
         Draw.aa(dc, true);
+        var clock = System.getClockTime();
+        var hourFrac = ((clock.hour % 12) + clock.min / 60.0) / 12.0;
+        var minFrac = (clock.min + clock.sec / 60.0) / 60.0;
+
+        // --- Always-on: sparse vector face on black (Garmin AOD style) ---
+        // Outlined hour markers + subdial rings + bright hands. Few lit pixels
+        // (burn-in safe) but bright and alive — a full-screen bitmap blanks in
+        // low power on-device, which is why the baked dial went black in AOD.
+        if (_lowPower) {
+            drawAod(dc, hourFrac, minFrac);
+            return;
+        }
+
+        // --- Active: blit the baked dial, then live hands / complications ---
         if (_dialBmp != null) {
             dc.drawBitmap(0, 0, _dialBmp);
         } else {
             dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
             dc.clear();
         }
-
-        var clock = System.getClockTime();
-        var hourFrac = ((clock.hour % 12) + clock.min / 60.0) / 12.0;
-        var minFrac = (clock.min + clock.sec / 60.0) / 60.0;
-
-        // Always-on: dimmed dial + hour/minute hands only (burn-in-safe).
-        if (_lowPower) {
-            _hands.drawHour(dc, _theme, hourFrac);
-            _hands.drawMinute(dc, _theme, minFrac);
-            _hands.drawHub(dc, _theme);
-            return;
-        }
-
         _subs.drawRight(dc, _theme);
         _subs.drawLeft(dc, _theme, clock.hour, clock.min);
         _subs.drawDate(dc, _theme, dayOfMonth());
@@ -108,6 +100,37 @@ class BondSeamasterView extends WatchUi.WatchFace {
             _prevBox = secBox(secFrac);
         }
         _hands.drawHub(dc, _theme);
+    }
+
+    // Always-on face: black + dim-blue outlined markers/subdials + bright hands.
+    private function drawAod(dc as Graphics.Dc, hourFrac as Float, minFrac as Float) as Void {
+        var cx = _geo.cx; var cy = _geo.cy;
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
+        var blue = 0x3C6EE0;
+
+        // 12 hollow hour markers (double dot at 12)
+        dc.setColor(blue, Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(3);
+        var mr = _geo.rad(_geo.MARKER_DOT_R);
+        for (var h = 0; h < 12; h++) {
+            var p = _geo.ptFrac(h / 12.0, _geo.MARKER_R);
+            dc.drawCircle(p[0], p[1], mr);
+        }
+        // subdial + date outlines
+        dc.setPenWidth(2);
+        var l = _geo.leftSubCenter();
+        var r = _geo.rightSubCenter();
+        var sr = _geo.rad(_geo.SUB_R);
+        dc.drawCircle(l[0], l[1], sr);
+        dc.drawCircle(r[0], r[1], sr);
+
+        // bright hands (draw in active palette so they read on black)
+        _theme.lowPower = false;
+        _hands.drawHour(dc, _theme, hourFrac);
+        _hands.drawMinute(dc, _theme, minFrac);
+        _hands.drawHub(dc, _theme);
+        _theme.lowPower = true;
     }
 
     // Once-per-second seconds tick (active): repaint only the second-hand region.
