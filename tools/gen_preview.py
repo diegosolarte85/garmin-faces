@@ -25,9 +25,9 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "store", "screenshots")
 # ---------------------------------------------------------------------------
 TOKENS = {
     "CERAMIC_BASE": (0x0A, 0x0A, 0x0B),
-    "WAVE_RIDGE":   (0x0E, 0x0E, 0x10),
-    "WAVE_HI":      (0x3A, 0x3A, 0x3C),
-    "WAVE_HI2":     (0x4A, 0x4A, 0x4A),   # upper-left gloss zone crest
+    "WAVE_RIDGE":   (0x12, 0x12, 0x15),
+    "WAVE_HI":      (0x52, 0x52, 0x55),
+    "WAVE_HI2":     (0x6A, 0x6A, 0x6C),   # upper-left gloss zone crest
     "WAVE_GROOVE":  (0x02, 0x02, 0x03),
     "BEZEL_BLACK":  (0x06, 0x06, 0x08),
     "BEZEL_SHEEN1": (0x1E, 0x20, 0x23),
@@ -105,7 +105,7 @@ THEMES = {
 BEZEL_INNER   = 0.775
 REHAUT_IN     = 0.755
 DIAL_R        = 0.755
-DIAL_FILL     = 1.26   # match Geometry.mc: dial fills screen, no drawn bezel
+DIAL_FILL     = 1.04   # match Geometry.mc: dial fills screen, no drawn bezel
 
 BZ_NUM_R      = 0.875   # bezel numeral center radius
 BZ_NUM_CAP    = 0.170   # numeral cap height
@@ -936,7 +936,7 @@ def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True, dim=F
              for k, v in T.items()}
 
     paint_background(cv, R, T)
-    # paint_bezel removed — physical Fenix bezel carries the dive scale
+    paint_bezel(cv, c, R, T)
     paint_flange(cv, c, R, T)
     paint_text_stack(cv, c, R, T)
     paint_subdial_left(cv, c, R, T, seconds=s, hand=hands)
