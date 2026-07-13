@@ -105,7 +105,7 @@ THEMES = {
 BEZEL_INNER   = 0.775
 REHAUT_IN     = 0.755
 DIAL_R        = 0.755
-DIAL_FILL     = 1.04   # match Geometry.mc: dial fills screen, no drawn bezel
+DIAL_FILL     = 1.28   # match Geometry.mc: dial fills screen, no drawn bezel
 
 BZ_NUM_R      = 0.875   # bezel numeral center radius
 BZ_NUM_CAP    = 0.170   # numeral cap height
@@ -936,7 +936,7 @@ def render_face(size, theme, ss=3, h=10, m=9, s=37, date="12", hands=True, dim=F
              for k, v in T.items()}
 
     paint_background(cv, R, T)
-    paint_bezel(cv, c, R, T)
+    # paint_bezel removed — the physical metal bezel carries the dive scale
     paint_flange(cv, c, R, T)
     paint_text_stack(cv, c, R, T)
     paint_subdial_left(cv, c, R, T, seconds=s, hand=hands)
