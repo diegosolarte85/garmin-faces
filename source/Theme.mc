@@ -8,6 +8,7 @@ using Toybox.Application.Properties as Props;
 // burn-in (Constitution Article IV).
 class Theme {
     // --- settings ---
+    public var faceStyle as Number = 0;   // 0 Analog, 1 Digital, 2 Sport
     public var dialTheme as Number = 0;   // 0 Black Ceramic, 1 Dawn
     public var accentColor as Number = 0; // 0 Bronze, 1 Red
     public var leftSub as Number = 0;     // 0 24h,1 HR,2 Body,3 Off
@@ -79,6 +80,7 @@ class Theme {
     public function initialize() {}
 
     public function load() as Void {
+        faceStyle   = readNum("FaceStyle", 0);
         dialTheme   = readNum("DialTheme", 0);
         accentColor = readNum("AccentColor", 0);
         leftSub     = readNum("LeftSubdial", 0);

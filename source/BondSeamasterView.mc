@@ -16,9 +16,10 @@ class BondSeamasterView extends WatchUi.WatchFace {
     private var _theme as Theme;
     private var _hands as Hands;
     private var _subs as Subdials;
+    private var _digital as DigitalFace;
 
     private var _dialBmp as WatchUi.BitmapResource?;
-    private var _loadedKey as Number = -1;   // theme*2 + (dim?1:0) currently loaded
+    private var _loadedKey as Number = -1;   // theme*2 + styleGroup currently loaded
     private var _lowPower as Boolean = false;
     private var _prevBox as Array<Number>?;
 
@@ -28,6 +29,7 @@ class BondSeamasterView extends WatchUi.WatchFace {
         _theme = new Theme();
         _hands = new Hands(_geo);
         _subs = new Subdials(_geo);
+        _digital = new DigitalFace(_geo);
     }
 
     public function onLayout(dc as Graphics.Dc) as Void {
@@ -45,13 +47,21 @@ class BondSeamasterView extends WatchUi.WatchFace {
         loadDial();
     }
 
-    // Load the bright baked dial for the current theme (active mode only —
-    // always-on is drawn as sparse vector, no bitmap).
+    // Load the bright baked background for the current theme + face style
+    // (active mode only — always-on is drawn as sparse vector, no bitmap).
+    // Digital and Sport share one background (waves + trident + wordmark).
     private function loadDial() as Void {
-        if (_theme.dialTheme == _loadedKey && _dialBmp != null) { return; }
-        var id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDawn : Rez.Drawables.DialBlack;
+        var key = _theme.dialTheme * 2 + (_theme.faceStyle > 0 ? 1 : 0);
+        if (key == _loadedKey && _dialBmp != null) { return; }
+        var id;
+        if (_theme.faceStyle > 0) {
+            id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDigitalDawn
+                                         : Rez.Drawables.DialDigitalBlack;
+        } else {
+            id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDawn : Rez.Drawables.DialBlack;
+        }
         _dialBmp = WatchUi.loadResource(id) as WatchUi.BitmapResource;
-        _loadedKey = _theme.dialTheme;
+        _loadedKey = key;
     }
 
     public function onExitSleep() as Void {
@@ -78,7 +88,11 @@ class BondSeamasterView extends WatchUi.WatchFace {
         // (burn-in safe) but bright and alive — a full-screen bitmap blanks in
         // low power on-device, which is why the baked dial went black in AOD.
         if (_lowPower) {
-            drawAod(dc, hourFrac, minFrac);
+            if (_theme.faceStyle > 0) {
+                _digital.drawAod(dc, _theme);
+            } else {
+                drawAod(dc, hourFrac, minFrac);
+            }
             return;
         }
 
@@ -88,6 +102,10 @@ class BondSeamasterView extends WatchUi.WatchFace {
         } else {
             dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
             dc.clear();
+        }
+        if (_theme.faceStyle > 0) {
+            _digital.draw(dc, _theme, showSeconds());
+            return;
         }
         _subs.drawRight(dc, _theme);
         _subs.drawLeft(dc, _theme, clock.hour, clock.min);
@@ -143,6 +161,16 @@ class BondSeamasterView extends WatchUi.WatchFace {
         if (_lowPower || !showSeconds() || _dialBmp == null) { return; }
         Draw.aa(dc, true);
         var clock = System.getClockTime();
+
+        // Digital styles: repaint just the small seconds-text slot.
+        if (_theme.faceStyle > 0) {
+            var b = _digital.secBox(_theme.faceStyle);
+            dc.setClip(b[0], b[1], b[2] - b[0], b[3] - b[1]);
+            dc.drawBitmap(0, 0, _dialBmp);
+            _digital.drawSeconds(dc, _theme, clock.sec);
+            dc.clearClip();
+            return;
+        }
         var secFrac = clock.sec / 60.0;
         var box = unionBox(_prevBox, secBox(secFrac));
         if (box == null) { return; }

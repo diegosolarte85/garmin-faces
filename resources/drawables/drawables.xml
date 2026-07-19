@@ -6,4 +6,7 @@
          on-device. Always-on is drawn as sparse vector, so no dim bitmaps. -->
     <bitmap id="DialBlack" filename="dial_black_ceramic.png" packingFormat="png"/>
     <bitmap id="DialDawn" filename="dial_dawn.png" packingFormat="png"/>
+    <!-- Digital/Sport style background: waves + trident + wordmark only. -->
+    <bitmap id="DialDigitalBlack" filename="dial_digital_black_ceramic.png" packingFormat="png"/>
+    <bitmap id="DialDigitalDawn" filename="dial_digital_dawn.png" packingFormat="png"/>
 </drawables>
