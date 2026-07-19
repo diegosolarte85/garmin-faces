@@ -6,126 +6,177 @@ using Toybox.Time;
 using Toybox.Time.Gregorian;
 using Toybox.Math;
 
-// Watch face lifecycle + compositing + power state machine.
-// Render pipeline and states: specs/.../design.md §1, §4.
+// Watch face lifecycle. The static dial is a pre-baked 454x454 image asset
+// (resources/drawables/dial_*.png, rendered by tools/gen_dial_assets.py) blitted
+// each frame — Garmin's own technique: flawless anti-aliasing, gradients, and no
+// runtime render cost / watchdog risk. Only the moving hands and live
+// complication values are drawn on top.
 class BondSeamasterView extends WatchUi.WatchFace {
     private var _geo as Geometry;
     private var _theme as Theme;
-    private var _dial as DialRenderer;
     private var _hands as Hands;
     private var _subs as Subdials;
-    private var _dawn as FxDawnSweep;
+    private var _digital as DigitalFace;
 
-    private var _bufRef as Graphics.BufferedBitmapReference?;
+    private var _dialBmp as WatchUi.BitmapResource?;
+    private var _loadedKey as Number = -1;   // theme*2 + styleGroup currently loaded
     private var _lowPower as Boolean = false;
-
-    // Progressive static-render cursor: -1 = idle/complete, >=0 = the next
-    // DialRenderer stage to paint into the buffer. The full dial is far too
-    // heavy to draw in one onUpdate (it trips the device execution watchdog),
-    // so we paint one bounded stage per frame until done, once — the buffer is
-    // then reused for the whole session (no per-wake rebuild).
-    private var _buildStage as Number = -1;
-
-    // previous second-hand bounding box for partial-update clipping
     private var _prevBox as Array<Number>?;
 
     public function initialize() {
         WatchFace.initialize();
         _geo = new Geometry();
         _theme = new Theme();
-        _dial = new DialRenderer(_geo);
         _hands = new Hands(_geo);
         _subs = new Subdials(_geo);
-        _dawn = new FxDawnSweep(_geo);
+        _digital = new DigitalFace(_geo);
     }
 
     public function onLayout(dc as Graphics.Dc) as Void {
         _geo.setBounds(dc.getWidth(), dc.getHeight());
         _theme.load();
-        startBuild(dc.getWidth(), dc.getHeight());
+        loadDial();
     }
 
     public function onShow() as Void {
-        if (_bufRef == null && _buildStage < 0) {
-            startBuild(_geo.w, _geo.h);
-        }
+        loadDial();
     }
 
-    // Called by the app on a settings change — rebuild the static art once.
     public function reloadSettings() as Void {
         _theme.load();
-        startBuild(_geo.w, _geo.h);
+        loadDial();
+    }
+
+    // Load the bright baked background for the current theme + face style
+    // (active mode only — always-on is drawn as sparse vector, no bitmap).
+    // Digital and Sport share one background (waves + trident + wordmark).
+    private function loadDial() as Void {
+        var key = _theme.dialTheme * 2 + (_theme.faceStyle > 0 ? 1 : 0);
+        if (key == _loadedKey && _dialBmp != null) { return; }
+        var id;
+        if (_theme.faceStyle > 0) {
+            id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDigitalDawn
+                                         : Rez.Drawables.DialDigitalBlack;
+        } else {
+            id = (_theme.dialTheme == 1) ? Rez.Drawables.DialDawn : Rez.Drawables.DialBlack;
+        }
+        _dialBmp = WatchUi.loadResource(id) as WatchUi.BitmapResource;
+        _loadedKey = key;
     }
 
     public function onExitSleep() as Void {
         _lowPower = false;
         _theme.lowPower = false;
-        // NB: no static-art rebuild here — the baked buffer is reused, so we
-        // never re-run the heavy render on a wrist-raise (watchdog safety).
-        if (_theme.dawnSweep) {
-            _dawn.arm();
-        }
         WatchUi.requestUpdate();
     }
 
     public function onEnterSleep() as Void {
         _lowPower = true;
         _theme.lowPower = true;
-        _dawn.cancel();
         _prevBox = null;
         WatchUi.requestUpdate();
     }
 
-    // --- full paint ---
     public function onUpdate(dc as Graphics.Dc) as Void {
-        if (_buildStage >= 0) {
-            advanceBuild();          // paint one bounded stage into the buffer
-        }
-        blitStatic(dc);
-
-        if (!_lowPower && _dawn.isActive()) {
-            _dawn.draw(dc, _theme);
-            lumeBloom(dc);
-            _dawn.step();
-        }
-
+        Draw.aa(dc, true);
         var clock = System.getClockTime();
-        var day = dayOfMonth();
-
-        _subs.drawRight(dc, _theme);
-        _subs.drawLeft(dc, _theme, clock.hour, clock.min);
-        _subs.drawDate(dc, _theme, day);
-
         var hourFrac = ((clock.hour % 12) + clock.min / 60.0) / 12.0;
         var minFrac = (clock.min + clock.sec / 60.0) / 60.0;
+
+        // --- Always-on: sparse vector face on black (Garmin AOD style) ---
+        // Outlined hour markers + subdial rings + bright hands. Few lit pixels
+        // (burn-in safe) but bright and alive — a full-screen bitmap blanks in
+        // low power on-device, which is why the baked dial went black in AOD.
+        if (_lowPower) {
+            if (_theme.faceStyle > 0) {
+                _digital.drawAod(dc, _theme);
+            } else {
+                drawAod(dc, hourFrac, minFrac);
+            }
+            return;
+        }
+
+        // --- Active: blit the baked dial, then live hands / complications ---
+        if (_dialBmp != null) {
+            dc.drawBitmap(0, 0, _dialBmp);
+        } else {
+            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            dc.clear();
+        }
+        if (_theme.faceStyle > 0) {
+            _digital.draw(dc, _theme, showSeconds());
+            return;
+        }
+        _subs.drawRight(dc, _theme);
+        _subs.drawLeft(dc, _theme, clock.hour, clock.min);
+        _subs.drawDate(dc, _theme, dayOfMonth());
         _hands.drawHour(dc, _theme, hourFrac);
         _hands.drawMinute(dc, _theme, minFrac);
-
         if (showSeconds()) {
             var secFrac = clock.sec / 60.0;
             _hands.drawSeconds(dc, _theme, secFrac);
             _prevBox = secBox(secFrac);
         }
         _hands.drawHub(dc, _theme);
-
-        // keep frames coming while the dawn effect plays or the buffer is
-        // still assembling itself over successive frames
-        if (_buildStage >= 0 || (!_lowPower && _dawn.isActive())) {
-            WatchUi.requestUpdate();
-        }
     }
 
-    // --- once-per-second seconds tick (active) ---
+    // Always-on face: black + glowing lume hour markers + bright hands.
+    // Few lit pixels (burn-in safe) but reads like a real diver's lume at night.
+    private function drawAod(dc as Graphics.Dc, hourFrac as Float, minFrac as Float) as Void {
+        var cx = _geo.cx; var cy = _geo.cy;
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.clear();
+
+        // Refined lume tones (Super-LumiNova-style teal glow), dim for burn-in.
+        var lume = 0x59B6A4;      // hour markers
+        var lume12 = 0xB4ECDC;    // brighter 12 o'clock reference
+        var dot = _geo.rad(0.026);
+
+        for (var h = 1; h < 12; h++) {
+            var p = _geo.ptFrac(h / 12.0, _geo.MARKER_R);
+            dc.setColor(lume, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(p[0], p[1], dot);
+        }
+        // 12 o'clock: an upright lume baton so the face is instantly oriented.
+        var top = _geo.ptFrac(0.0, _geo.MARKER_R);
+        var bw = dot * 1.5;
+        var bh = dot * 3.0;
+        dc.setColor(lume12, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(top[0] - bw / 2.0, top[1] - bh / 2.0, bw, bh, dot * 0.7);
+
+        // bright hands (draw in active palette so they read on black)
+        _theme.lowPower = false;
+        _hands.drawHour(dc, _theme, hourFrac);
+        _hands.drawMinute(dc, _theme, minFrac);
+        _hands.drawHub(dc, _theme);
+        _theme.lowPower = true;
+
+        // subtle gold center pip echoing the trident accent
+        dc.setColor(0xC8A05A, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(cx, cy, dot * 0.5);
+    }
+
+    // Once-per-second seconds tick (active): repaint only the second-hand region.
     public function onPartialUpdate(dc as Graphics.Dc) as Void {
-        if (_lowPower || !showSeconds()) { return; }
+        if (_lowPower || !showSeconds() || _dialBmp == null) { return; }
+        Draw.aa(dc, true);
         var clock = System.getClockTime();
+
+        // Digital styles: repaint just the small seconds-text slot.
+        if (_theme.faceStyle > 0) {
+            var b = _digital.secBox(_theme.faceStyle);
+            dc.setClip(b[0], b[1], b[2] - b[0], b[3] - b[1]);
+            dc.drawBitmap(0, 0, _dialBmp);
+            _digital.drawSeconds(dc, _theme, clock.sec);
+            dc.clearClip();
+            return;
+        }
         var secFrac = clock.sec / 60.0;
         var box = unionBox(_prevBox, secBox(secFrac));
         if (box == null) { return; }
 
         dc.setClip(box[0], box[1], box[2] - box[0], box[3] - box[1]);
-        blitStatic(dc);
-        // redraw the bits that live under the clip
+        dc.drawBitmap(0, 0, _dialBmp);
         var hourFrac = ((clock.hour % 12) + clock.min / 60.0) / 12.0;
         var minFrac = (clock.min + clock.sec / 60.0) / 60.0;
         _hands.drawHour(dc, _theme, hourFrac);
@@ -138,51 +189,8 @@ class BondSeamasterView extends WatchUi.WatchFace {
 
     // --- helpers ---
     private function showSeconds() as Boolean {
-        if (_theme.secondsMode == 1) { return false; } // always hidden
-        return !_lowPower;                              // sweep, hidden in AOD
-    }
-
-    private function blitStatic(dc as Graphics.Dc) as Void {
-        if (_bufRef != null) {
-            var bmp = _bufRef.get();
-            if (bmp != null) {
-                dc.drawBitmap(0, 0, bmp);
-                return;
-            }
-        }
-        // fallback: draw static art straight to screen
-        _dial.draw(dc, _theme);
-    }
-
-    // Allocate the off-screen buffer and arm progressive rendering. Paints a
-    // cheap base fill so the first frames aren't blank while the dial assembles
-    // over the next STAGE_COUNT updates.
-    private function startBuild(w as Number, h as Number) as Void {
-        if (Graphics has :createBufferedBitmap) {
-            _bufRef = Graphics.createBufferedBitmap({:width => w, :height => h});
-            var bmp = (_bufRef != null) ? _bufRef.get() : null;
-            if (bmp != null) {
-                var bdc = bmp.getDc();
-                bdc.setColor(_theme.ceramicBase(), _theme.ceramicBase());
-                bdc.clear();
-                _buildStage = 0;
-                _theme.dirty = false;
-                return;
-            }
-        }
-        // no buffer available — blitStatic falls back to direct draw
-        _bufRef = null;
-        _buildStage = -1;
-        _theme.dirty = false;
-    }
-
-    // Paint exactly one static-render stage into the buffer per call.
-    private function advanceBuild() as Void {
-        if (_bufRef == null) { _buildStage = -1; return; }
-        var bmp = _bufRef.get();
-        if (bmp == null) { _buildStage = -1; return; }
-        var done = _dial.drawStage(bmp.getDc(), _theme, _buildStage);
-        _buildStage = done ? -1 : _buildStage + 1;
+        if (_theme.secondsMode == 1) { return false; }
+        return !_lowPower;
     }
 
     private function dayOfMonth() as Number {
@@ -190,15 +198,6 @@ class BondSeamasterView extends WatchUi.WatchFace {
         return info.day;
     }
 
-    // Soft lume bloom at the hour-marker tips during the wake flourish.
-    private function lumeBloom(dc as Graphics.Dc) as Void {
-        for (var h = 0; h < 12; h++) {
-            var p = _geo.ptFrac(h / 12.0, _geo.MARKER_OUTER);
-            Draw.dot(dc, p[0], p[1], _geo.rad(0.018), _theme.lumeGlow());
-        }
-    }
-
-    // Bounding box [minX, minY, maxX, maxY] of the second hand at a fraction.
     private function secBox(frac as Float) as Array<Number> {
         var pts = [
             _geo.ptFrac(frac, _geo.SEC_LEN),
@@ -206,7 +205,7 @@ class BondSeamasterView extends WatchUi.WatchFace {
             _geo.ptFrac((frac + 0.5) - ((frac + 0.5) >= 1.0 ? 1.0 : 0.0), _geo.SEC_TAIL),
             [_geo.cx, _geo.cy]
         ];
-        var pad = _geo.rad(0.05);
+        var pad = _geo.rad(0.06);
         var minx = pts[0][0]; var maxx = pts[0][0];
         var miny = pts[0][1]; var maxy = pts[0][1];
         for (var i = 1; i < pts.size(); i++) {
@@ -226,7 +225,6 @@ class BondSeamasterView extends WatchUi.WatchFace {
         var miny = a[1] < b[1] ? a[1] : b[1];
         var maxx = a[2] > b[2] ? a[2] : b[2];
         var maxy = a[3] > b[3] ? a[3] : b[3];
-        // clamp to screen
         if (minx < 0) { minx = 0; }
         if (miny < 0) { miny = 0; }
         if (maxx > _geo.w) { maxx = _geo.w; }

@@ -8,6 +8,7 @@ using Toybox.Application.Properties as Props;
 // burn-in (Constitution Article IV).
 class Theme {
     // --- settings ---
+    public var faceStyle as Number = 0;   // 0 Analog, 1 Digital, 2 Sport
     public var dialTheme as Number = 0;   // 0 Black Ceramic, 1 Dawn
     public var accentColor as Number = 0; // 0 Bronze, 1 Red
     public var leftSub as Number = 0;     // 0 24h,1 HR,2 Body,3 Off
@@ -24,8 +25,8 @@ class Theme {
     // Dial + wave field
     private var C_CERAMIC    = [0x0A0A0B, 0x040404]; // CERAMIC_BASE — dead-neutral black
     private var C_WAVE_RIDGE = [0x0E0E10, 0x060606]; // WAVE_RIDGE face fill
-    private var C_WAVE_HI    = [0x3A3A3C, 0x171718]; // WAVE_HI crest highlight
-    private var C_WAVE_GLOSS = [0x4A4A4A, 0x1E1E1E]; // WAVE_HI in upper-left gloss zone
+    private var C_WAVE_HI    = [0x1C1C1F, 0x101011]; // WAVE_HI crest highlight (softened: was 0x3A3A3C scratchy)
+    private var C_WAVE_GLOSS = [0x272729, 0x141415]; // WAVE_HI in upper-left gloss zone
     private var C_WAVE_LO    = [0x020203, 0x010101]; // WAVE_GROOVE shadow stroke
     // Bezel + rehaut
     private var C_BEZEL      = [0x060608, 0x020203]; // BEZEL_BLACK
@@ -79,6 +80,7 @@ class Theme {
     public function initialize() {}
 
     public function load() as Void {
+        faceStyle   = readNum("FaceStyle", 0);
         dialTheme   = readNum("DialTheme", 0);
         accentColor = readNum("AccentColor", 0);
         leftSub     = readNum("LeftSubdial", 0);

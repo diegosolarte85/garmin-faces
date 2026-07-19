@@ -19,6 +19,7 @@ using Toybox.Math;
 // numbers that are not shared tokens live here as scalar consts with § refs.
 class DialRenderer {
     private var _geo as Geometry;
+    private var _glyphs as Glyphs;
 
     // --- spec-local scalars (fractions of R unless noted) ---
     private const WAVE_HI_W    = 0.014; // §3 crest highlight stroke width
@@ -70,6 +71,7 @@ class DialRenderer {
 
     public function initialize(geo as Geometry) {
         _geo = geo;
+        _glyphs = new Glyphs();
     }
 
     // Static art entry point — called once into the buffered bitmap.
@@ -78,7 +80,7 @@ class DialRenderer {
     // execution watchdog, so BondSeamasterView paints ONE stage per frame into
     // the off-screen buffer until complete. Kept once and reused (no per-wake
     // rebuild).
-    public const STAGE_COUNT = 7;
+    public const STAGE_COUNT = 8;
 
     // Full render in one pass — only the buffer-unavailable fallback path uses
     // this (real devices go through drawStage). Order matches drawStage.
@@ -105,7 +107,7 @@ class DialRenderer {
                 waveLines(dc, theme, true);          // §3 groove shadows
                 break;
             case 3:
-                bezel(dc, theme);                    // §2.2 + §3 (paints rehaut)
+                dialEdge(dc, theme);                 // thin finished rim (bezel removed)
                 break;
             case 4:
                 minuteTrack(dc, theme);              // §2.3
@@ -115,8 +117,11 @@ class DialRenderer {
                 subdialLeft(dc, theme);              // §2.7 left
                 subdialRight(dc, theme);             // §2.7 right
                 break;
+            case 6:
+                upperText(dc, theme);                // §2.9 Ω + OMEGA / SEAMASTER / PROFESSIONAL
+                break;
             default:
-                textStack(dc, theme);                // §2.9
+                lowerText(dc, theme);                // §2.9 [ZrO2] / CO-AXIAL / MASTER CHRONOMETER / 300m / SWISS MADE
                 dateAperture(dc, theme);             // §2.8 (numeral dynamic)
                 return true;
         }
@@ -219,6 +224,18 @@ class DialRenderer {
     // Bezel (§2.2 + §3): ceramic band, sheen, rehaut, dot track, batons,
     // numeral ticks, rotated stroked numerals, outlined triangle + pearl.
     // ------------------------------------------------------------------
+    // Thin finished rim at the dial edge — replaces the drawn bezel, which was
+    // removed so the dial fills the screen (the physical Fenix bezel carries the
+    // dive scale). Just a subtle hairline so the round dial has a clean border.
+    private function dialEdge(dc as Graphics.Dc, theme as Theme) as Void {
+        var cx = _geo.cx; var cy = _geo.cy;
+        var dialR = _geo.rad(_geo.DIAL_R);
+        dc.setColor(theme.rehautLine(), Graphics.COLOR_TRANSPARENT);
+        dc.setPenWidth(penW(_geo.R * 0.006));
+        dc.drawCircle(cx, cy, dialR);
+        dc.setPenWidth(1);
+    }
+
     private function bezel(dc as Graphics.Dc, theme as Theme) as Void {
         var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
         var rOut = _geo.rad(_geo.BEZEL_OUTER);
@@ -422,28 +439,12 @@ class DialRenderer {
         var sx = c[0]; var sy = c[1]; var R = _geo.R;
         subRecess(dc, theme, sx, sy);
         var col = theme.subPrint();
-        // 5-second ticks (every 30 deg)
+        // Clean quarter ticks only. (The 1-second dot ring and the tiny rotated
+        // 10..60 numerals were illegible noise on-device — removed.)
         for (var t = 0; t < 12; t++) {
             var a = (t / 12.0) * 2.0 * Math.PI;
-            radialBarAt(dc, sx, sy, a, R * _geo.SUBL_TICK_IN, R * _geo.SUBL_TICK_OUT,
-                        R * _geo.SUBL_TICK_W, col);
-        }
-        // 1-second dots between the ticks
-        var dr = R * _geo.SUBL_DOT_D / 2.0;
-        if (dr < 1.0) { dr = 1.0; }
-        for (var s = 0; s < 60; s++) {
-            if (s % 5 == 0) { continue; }
-            var a = (s / 60.0) * 2.0 * Math.PI;
-            var p = _geo.ptAt(sx, sy, a, R * _geo.SUBL_DOT_R);
-            Draw.dot(dc, p[0], p[1], dr, col);
-        }
-        // tangentially rotated numerals 10..60 ("30" upside-down at the bottom)
-        var cap = R * _geo.SUBL_NUM_CAP;
-        for (var v = 10; v <= 60; v += 10) {
-            var a = ((v % 60) / 60.0) * 2.0 * Math.PI;
-            var p = _geo.ptAt(sx, sy, a, R * _geo.SUBL_NUM_R);
-            drawNumeral(dc, v, p[0], p[1], a, cap, cap * DIGIT_W_RATIO,
-                        cap * DIGIT_GAP_RATIO, cap * DIGIT_STROKE_RATIO, col);
+            var w = (t % 3 == 0) ? R * _geo.SUBL_TICK_W * 1.8 : R * _geo.SUBL_TICK_W;
+            radialBarAt(dc, sx, sy, a, R * _geo.SUBL_TICK_IN, R * _geo.SUBL_TICK_OUT, w, col);
         }
     }
 
@@ -467,27 +468,11 @@ class DialRenderer {
         dc.drawArc(sx, sy, ringMid, Graphics.ARC_COUNTER_CLOCKWISE, 250, 290);
         dc.setPenWidth(1);
         var col = theme.ringPrint();
-        // full-ring-width hairline ticks at odd hours
-        for (var hh = 1; hh < 12; hh += 2) {
+        // Clean hour ticks on the bronze ring only. (The minute-dot ring and
+        // the tiny 12-2-4-... numerals were noise on-device — removed.)
+        for (var hh = 0; hh < 12; hh++) {
             var a = (hh / 12.0) * 2.0 * Math.PI;
             radialBarAt(dc, sx, sy, a, rIn, rOut, R * _geo.SUBR_TICK_W, col);
-        }
-        // minute dots: four per 5-minute sector
-        var dr = R * _geo.SUBR_DOT_D / 2.0;
-        if (dr < 1.0) { dr = 1.0; }
-        for (var m = 0; m < 60; m++) {
-            if (m % 5 == 0) { continue; }
-            var a = (m / 60.0) * 2.0 * Math.PI;
-            var p = _geo.ptAt(sx, sy, a, R * _geo.SUBR_DOT_R);
-            Draw.dot(dc, p[0], p[1], dr, col);
-        }
-        // rotated numerals 12-2-4-6-8-10, black on the bronze
-        var cap = R * _geo.SUBR_NUM_CAP;
-        for (var v = 12; v >= 2; v -= 2) {
-            var a = ((v % 12) / 12.0) * 2.0 * Math.PI;
-            var p = _geo.ptAt(sx, sy, a, R * _geo.SUBR_NUM_R);
-            drawNumeral(dc, v, p[0], p[1], a, cap, cap * DIGIT_W_RATIO,
-                        cap * DIGIT_GAP_RATIO, cap * DIGIT_STROKE_RATIO, col);
         }
     }
 
@@ -545,21 +530,34 @@ class DialRenderer {
     // [ZrO2] + CO-AXIAL / MASTER CHRONOMETER / 300m stack below, SWISS MADE
     // flanking the 6 o'clock plot on the flange arc.
     // ------------------------------------------------------------------
-    private function textStack(dc as Graphics.Dc, theme as Theme) as Void {
+    // §2.9 upper print — rendered with the crisp vector font (Glyphs) so the
+    // fine text stays legible and doesn't collide the way system fonts did.
+    private function upperText(dc as Graphics.Dc, theme as Theme) as Void {
         var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
         omegaMark(dc, theme, cx, cy - R * _geo.TXT_OMEGA_SYM);
-        line(dc, cx, cy - R * _geo.LOGO_R, theme.textHi(), "OMEGA");
-        line(dc, cx, cy - R * _geo.TXT_SEAMASTER, theme.poppyRed(), "Seamaster");
-        line(dc, cx, cy - R * _geo.TXT_PROF, theme.textMid(), "PROFESSIONAL");
-        line(dc, cx, cy + R * _geo.TXT_ZRO2, theme.zro2Gray(), "[ZrO2]");
-        line(dc, cx, cy + R * _geo.TXT_COAXIAL, theme.textMid(), "CO-AXIAL");
-        line(dc, cx, cy + R * _geo.TXT_MASTER, theme.textMid(), "MASTER CHRONOMETER");
-        line(dc, cx, cy + R * _geo.TXT_DEPTH, theme.textMid(), "300m / 1000ft");
-        // SWISS ... MADE on the arc at TXT_SWISS_R, one word each side of 6
-        var pSwiss = _geo.ptFrac(0.5 + SWISS_OFF, _geo.TXT_SWISS_R);
-        var pMade = _geo.ptFrac(0.5 - SWISS_OFF, _geo.TXT_SWISS_R);
-        line(dc, pSwiss[0], pSwiss[1], theme.textDim(), "SWISS");
-        line(dc, pMade[0], pMade[1], theme.textDim(), "MADE");
+        _glyphs.draw(dc, "OMEGA", cx, cy - R * _geo.LOGO_R, R * 0.052,
+                     penW(R * 0.0055), theme.textHi(), R * 0.012);
+        _glyphs.draw(dc, "SEAMASTER", cx, cy - R * _geo.TXT_SEAMASTER, R * 0.045,
+                     penW(R * 0.0050), theme.poppyRed(), R * 0.010);
+        _glyphs.draw(dc, "PROFESSIONAL", cx, cy - R * _geo.TXT_PROF, R * 0.034,
+                     penW(R * 0.0040), theme.textMid(), R * 0.009);
+    }
+
+    // §2.9 lower print.
+    private function lowerText(dc as Graphics.Dc, theme as Theme) as Void {
+        var cx = _geo.cx; var cy = _geo.cy; var R = _geo.R;
+        _glyphs.draw(dc, "[ZrO2]", cx, cy + R * _geo.TXT_ZRO2, R * 0.030,
+                     penW(R * 0.0038), theme.zro2Gray(), R * 0.006);
+        _glyphs.draw(dc, "CO-AXIAL", cx, cy + R * _geo.TXT_COAXIAL, R * 0.029,
+                     penW(R * 0.0036), theme.textMid(), R * 0.007);
+        _glyphs.draw(dc, "MASTER CHRONOMETER", cx, cy + R * _geo.TXT_MASTER, R * 0.029,
+                     penW(R * 0.0036), theme.textMid(), R * 0.005);
+        _glyphs.draw(dc, "300m / 1000ft", cx, cy + R * _geo.TXT_DEPTH, R * 0.031,
+                     penW(R * 0.0038), theme.textMid(), R * 0.006);
+        var pS = _geo.ptFrac(0.5 + SWISS_OFF, _geo.TXT_SWISS_R);
+        var pM = _geo.ptFrac(0.5 - SWISS_OFF, _geo.TXT_SWISS_R);
+        _glyphs.draw(dc, "SWISS", pS[0], pS[1], R * 0.026, penW(R * 0.0030), theme.textDim(), R * 0.005);
+        _glyphs.draw(dc, "MADE", pM[0], pM[1], R * 0.026, penW(R * 0.0030), theme.textDim(), R * 0.005);
     }
 
     private function line(dc as Graphics.Dc, x as Numeric, y as Numeric,

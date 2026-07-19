@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <strings>
-    <string id="AppName">007 First Light</string>
+    <string id="AppName">First Light</string>
 
     <!-- Settings titles -->
+    <string id="SetFaceStyle">Face style</string>
     <string id="SetDialTheme">Dial theme</string>
     <string id="SetAccent">Accent color</string>
     <string id="SetLeftSubdial">Left dial (9 o'clock)</string>
     <string id="SetRightSubdial">Right dial (3 o'clock)</string>
     <string id="SetSeconds">Seconds hand</string>
     <string id="SetDawn">Dawn first-light sweep</string>
+
+    <!-- Face style options -->
+    <string id="OptStyleAnalog">Analog chronograph</string>
+    <string id="OptStyleDigital">Digital</string>
+    <string id="OptStyleSport">Digital Sport</string>
 
     <!-- Theme options -->
     <string id="OptThemeBlack">Black Ceramic</string>

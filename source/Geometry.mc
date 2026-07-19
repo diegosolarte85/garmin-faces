@@ -14,9 +14,16 @@ class Geometry {
     public var h as Number = 0;
 
     // --- Radial architecture (§2.1) ---
+    // The drawn bezel was removed — the physical Fenix 8 Pro bezel already
+    // carries the dive scale, so drawing our own duplicated it and shrank the
+    // dial. DIAL_FILL scales the radius unit so content designed within DIAL_R
+    // (0.755) fills the screen to ~0.95 of the half-width. All tokens below are
+    // still expressed in the original design space; the scale is applied once
+    // in setBounds so every `R * token` grows together.
+    public const DIAL_FILL   = 1.280;
     public const BEZEL_OUTER = 1.000;
-    public const BEZEL_INNER = 0.775;   // bezel occupies the outer 22.5%
-    public const REHAUT_IN   = 0.755;   // gasket ring between dial and bezel
+    public const BEZEL_INNER = 0.775;   // (legacy — bezel no longer drawn)
+    public const REHAUT_IN   = 0.755;
     public const REHAUT_OUT  = 0.775;
     public const DIAL_R      = 0.755;   // visible wave dial ends here
 
@@ -70,18 +77,18 @@ class Geometry {
     public const PLOT_CORNER     = 0.008;
 
     // --- Subdials (§2.7) ---
-    public const SUB_OFFSET      = 0.393;  // centers at (+/-0.393, 0)
-    public const SUB_R           = 0.247;  // recess outer (edge reaches 0.640)
-    public const SUB_SNAIL_R     = 0.160;  // snailed black center
+    public const SUB_OFFSET      = 0.415;  // centers at (+/-0.393, 0)
+    public const SUB_R           = 0.150;  // recess outer (edge reaches 0.640)
+    public const SUB_SNAIL_R     = 0.095;  // snailed black center
     public const SUB_SNAIL_PITCH = 0.006;  // snailing ring pitch
-    public const SUB_RING_IN     = 0.160;  // right-sub bronze annulus
-    public const SUB_RING_OUT    = 0.242;
-    public const SUB_RING_W      = 0.082;  // = SUB_RING_OUT - SUB_RING_IN
+    public const SUB_RING_IN     = 0.095;  // right-sub bronze annulus
+    public const SUB_RING_OUT    = 0.146;
+    public const SUB_RING_W      = 0.051;  // = SUB_RING_OUT - SUB_RING_IN
     // Left (small seconds)
     public const SUBL_NUM_R    = 0.224;    // 10..60 numeral center radius
     public const SUBL_NUM_CAP  = 0.048;
-    public const SUBL_TICK_IN  = 0.165;    // 5-second ticks
-    public const SUBL_TICK_OUT = 0.201;
+    public const SUBL_TICK_IN  = 0.100;    // 5-second ticks
+    public const SUBL_TICK_OUT = 0.122;
     public const SUBL_TICK_W   = 0.009;
     public const SUBL_DOT_R    = 0.187;    // 1-second dots
     public const SUBL_DOT_D    = 0.006;
@@ -148,8 +155,8 @@ class Geometry {
     public const HUB_SLOT_W  = 0.009;      // dark slot across the cap
 
     // --- Wave field (§2.11) ---
-    public const WAVE_PITCH = 0.058;       // crest-to-crest row pitch (~26 rows)
-    public const WAVE_AMP   = 0.045;       // undulation amplitude
+    public const WAVE_PITCH = 0.075;       // crest-to-crest row pitch (~20 rows: finer detail)
+    public const WAVE_AMP   = 0.032;       // undulation amplitude (flatter, more refined)
     public const WAVE_LEN   = 0.560;       // undulation wavelength
 
     public function initialize() {}
@@ -159,7 +166,8 @@ class Geometry {
         h = height;
         cx = width / 2.0;
         cy = height / 2.0;
-        R = (width < height ? width : height) / 2.0;
+        // Scale the radius unit up (no drawn bezel) so the dial fills the screen.
+        R = ((width < height ? width : height) / 2.0) * DIAL_FILL;
     }
 
     // Absolute radius in pixels for a fraction of R.

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <properties>
     <!-- Defaults documented in specs/.../design.md §5 -->
+    <property id="FaceStyle" type="number">0</property>     <!-- 0 Analog, 1 Digital, 2 Sport -->
     <property id="DialTheme" type="number">0</property>     <!-- 0 Black Ceramic, 1 Dawn -->
     <property id="AccentColor" type="number">0</property>   <!-- 0 Bronze, 1 Red -->
     <property id="LeftSubdial" type="number">0</property>   <!-- 0 24h, 1 HR, 2 Body Battery, 3 Off -->

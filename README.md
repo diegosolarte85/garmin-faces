@@ -1,11 +1,15 @@
-# 007 First Light — Garmin Fenix 8 Pro Watch Face
+# First Light — Fenix 8 Pro Watch Face
 
-A high-fidelity Garmin Connect IQ watch face for the **Fenix 8 Pro 47mm** (454×454
-AMOLED), inspired by the **Omega Seamaster Diver 300M Chronograph "007 First Light"**.
+A high-fidelity Connect IQ watch face for the **Fenix 8 Pro 47mm** (454×454
+AMOLED) in the style of a classic **professional dive chronograph**.
 
-> Black ceramic wave dial · rhodium broad-arrow lume hands · PVD bronze-gold
-> central seconds & 3 o'clock counter · poppy-red *Seamaster* script · white
-> Super-LumiNova that glows alive on the wrist.
+> Black ceramic wave dial · broad-arrow lume hands · bronze-gold central seconds
+> & 3 o'clock counter · red *Diver* accent · luminous markers that glow alive on
+> the wrist.
+
+> **Trademark-free:** the dial and store art carry no third-party brand names or
+> logos (Garmin Connect IQ review requirement). The earlier brand-styled build is
+> preserved on the `archive/omega-seamaster-edition` branch for reference only.
 
 | Black Ceramic | Dawn First-Light | Poppy Red accent |
 | :---: | :---: | :---: |
@@ -26,7 +30,7 @@ geometry the watch face uses). For the source-watch design brief see
 | **Bezel** | Polished black ceramic ring with a white-enamel diving scale (0–60), luminous 12 o'clock pip. |
 | **Hands** | Skeletonised rhodium broad-arrow hour/minute hands with white lume inlays; thin bronze-gold central seconds with lollipop + counterweight. |
 | **Subdials** | Bicompax layout true to caliber 9900 — small running indicator at 9, bronze-ringed counter at 3, date window at 6. |
-| **Accents** | PVD bronze-gold and poppy-red, exactly where Omega placed them. |
+| **Accents** | PVD bronze-gold and poppy-red, placed like a classic dive chronograph. |
 | **Lume** | Markers and hands carry a luminous fill with a soft AMOLED bloom; a "First Light" dawn sweep animates across the dial on wrist-raise. |
 | **Performance** | Static art is pre-rendered once into an off-screen buffer and blitted each frame; only the hands and live complications redraw. |
 
@@ -100,5 +104,6 @@ Configurable from Garmin Connect / Connect IQ Store app:
 
 ## License
 
-Personal/fan project. "Omega", "Seamaster", "007" and related marks belong to
-their respective owners; this is an unaffiliated tribute rendering.
+Personal project. The dial and store art are trademark-free. Any resemblance
+to existing timepieces is stylistic; all third-party marks belong to their
+respective owners and are not used in the app or its store listing.

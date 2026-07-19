@@ -76,6 +76,6 @@ jobs:
           gh release create "${TAG}" \
             --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \
-            --title "007 First Light ${TAG}" \
-            --notes "Connect IQ store package for the 007 First Light watch face (Fenix 8 Pro 47mm). Upload dist/007FirstLight.iq at https://apps.garmin.com/developer/dashboard — see PUBLISHING.md." \
+            --title "First Light ${TAG}" \
+            --notes "Connect IQ store package for the First Light watch face (Fenix 8 Pro 47mm). Upload dist/007FirstLight.iq at https://apps.garmin.com/developer/dashboard — see PUBLISHING.md." \
             dist/007FirstLight.iq

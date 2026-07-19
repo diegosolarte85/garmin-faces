@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  007 First Light — Garmin Connect IQ watch face manifest.
-  Tribute to the Omega Seamaster Diver 300M Chronograph "007 First Light".
+  First Light — Garmin Connect IQ watch face manifest.
+  A high-fidelity professional dive-chronograph face (trademark-free).
   See specs/001-bond-seamaster-007-first-light/ for the governing spec.
 -->
 <iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
     <iq:application
         entry="BondSeamasterApp"
-        id="8b6441af21034338ba046edec8f66298"
+        id="c0346508d7ec499b868900c6cb17f570"
         launcherIcon="@Drawables.LauncherIcon"
         name="@Strings.AppName"
         type="watchface"
@@ -16,10 +16,11 @@
         <!-- Reference target: Fenix 8 Pro 47mm (454x454 round AMOLED).
              Geometry is resolution-independent; add more round AMOLED
              products here as they are validated. -->
+        <!-- 454x454 AMOLED products only — the baked dial art is 454x454.
+             (fenix843mm is 416x416; add a scaled asset before re-enabling it.) -->
         <iq:products>
             <iq:product id="fenix8pro47mm"/>
             <iq:product id="fenix847mm"/>
-            <iq:product id="fenix843mm"/>
         </iq:products>
 
         <!-- Minimal scope: time, system stats (battery) and ActivityMonitor

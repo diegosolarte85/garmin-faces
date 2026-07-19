@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings>
+    <setting propertyKey="@Properties.FaceStyle" title="@Strings.SetFaceStyle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.OptStyleAnalog</listEntry>
+            <listEntry value="1">@Strings.OptStyleDigital</listEntry>
+            <listEntry value="2">@Strings.OptStyleSport</listEntry>
+        </settingConfig>
+    </setting>
+
     <setting propertyKey="@Properties.DialTheme" title="@Strings.SetDialTheme">
         <settingConfig type="list">
             <listEntry value="0">@Strings.OptThemeBlack</listEntry>
