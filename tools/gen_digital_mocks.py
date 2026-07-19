@@ -207,15 +207,15 @@ def face_digital(size, ss=3):
     heart(cv, c + 0.360 * R, ty, 0.036 * R, RED)
     draw_text(cv, "72", c + 0.270 * R, ty, 0.044 * R, 0.0044 * R, DIM)
 
-    # date
-    draw_text(cv, "SUN 19", c, c - 0.245 * R, 0.052 * R, 0.0052 * R, GOLD,
+    # the time — two-tone (top slot belongs to the trident/wordmark)
+    big_time(cv, c, R, c - 0.020 * R, 0.270 * R)
+
+    # date below the digits
+    draw_text(cv, "SUN 19", c, c + 0.245 * R, 0.052 * R, 0.0052 * R, GOLD,
               total_w=0.230 * R)
 
-    # the time — two-tone
-    big_time(cv, c, R, c + 0.005 * R, 0.280 * R)
-
     # ticked seconds ring + gauges
-    seconds_ring(cv, c + 0.560 * R, c + 0.235 * R, 0.082 * R)
+    seconds_ring(cv, c + 0.565 * R, c + 0.100 * R, 0.082 * R)
     dotted_gauge(cv, c, R, 0.68)
     weekday_strip(cv, c, R, today=0)
 
@@ -254,13 +254,13 @@ def face_sport(size, ss=3):
     stroke_arc(cv, c, c, ga_r, ga_w, 30, 30 + 120 * 0.85, GOLD, step=3)
     battery_icon(cv, c + 0.585 * R, c + 0.002 * R, 0.058 * R, 0.030 * R, 0.85, GOLD)
 
-    # the time — two-tone (lower so the date clears it), seconds ring at right
-    big_time(cv, c, R, c - 0.085 * R, 0.215 * R)
-    seconds_ring(cv, c + 0.520 * R, c - 0.085 * R, 0.075 * R)
+    # the time — two-tone; seconds ring upper-right, clear of the battery icon
+    big_time(cv, c, R, c + 0.010 * R, 0.200 * R)
+    seconds_ring(cv, c + 0.500 * R, c - 0.115 * R, 0.075 * R)
 
     # complication pods: HR / body battery / calories
-    py = c + 0.290 * R
-    pr = 0.125 * R
+    py = c + 0.350 * R
+    pr = 0.120 * R
     pod(cv, c - 0.300 * R, py, pr, RED)
     heart(cv, c - 0.300 * R, py - 0.048 * R, 0.034 * R, RED)
     draw_text(cv, "72", c - 0.300 * R, py + 0.045 * R, 0.050 * R, 0.0052 * R, LUME)
@@ -271,12 +271,12 @@ def face_sport(size, ss=3):
     flame(cv, c + 0.300 * R, py - 0.048 * R, 0.040 * R, (0xE0, 0x7A, 0x3A))
     draw_text(cv, "1649", c + 0.300 * R, py + 0.045 * R, 0.046 * R, 0.0048 * R, LUME)
 
-    # bottom: sunrise / sunset
-    by = c + 0.505 * R
-    sun_icon(cv, c - 0.215 * R, by, 0.040 * R, GOLD, rising=True)
-    draw_text(cv, "6-12", c - 0.100 * R, by, 0.044 * R, 0.0044 * R, DIM)
-    sun_icon(cv, c + 0.085 * R, by, 0.040 * R, (0xB0, 0x7A, 0x4A), rising=False)
-    draw_text(cv, "8-45", c + 0.200 * R, by, 0.044 * R, 0.0044 * R, DIM)
+    # bottom: sunrise / sunset (below the pods)
+    by = c + 0.550 * R
+    sun_icon(cv, c - 0.210 * R, by, 0.045 * R, GOLD, rising=True)
+    draw_text(cv, "6-12", c - 0.095 * R, by, 0.044 * R, 0.0044 * R, DIM)
+    sun_icon(cv, c + 0.100 * R, by, 0.045 * R, (0xB0, 0x7A, 0x4A), rising=False)
+    draw_text(cv, "8-45", c + 0.215 * R, by, 0.044 * R, 0.0044 * R, DIM)
 
     return downsample(cv, size, ss)
 

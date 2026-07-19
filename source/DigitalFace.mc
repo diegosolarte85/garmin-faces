@@ -43,18 +43,27 @@ class DigitalFace {
     // ------------------------------------------------------------------ active
     public function draw(dc as Graphics.Dc, theme as Theme, showSec as Boolean) as Void {
         var clock = System.getClockTime();
-        var cx = _geo.cx; var cy = _geo.cy;
-
-        // date — shared slot below the wordmark
-        dc.setColor(GOLD, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, cy - _geo.rad(0.245), Graphics.FONT_TINY, dateStr(),
-                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-
         if (theme.faceStyle == 2) {
             drawSport(dc, theme, clock, showSec);
         } else {
             drawDigital(dc, theme, clock, showSec);
         }
+    }
+
+    // Place the seconds ring just right of the digits, clamped inside the
+    // dial so it can never spill off-screen or into the edge gauges.
+    private function placeSecondsRing(xr as Float, sy as Float, ringR as Float,
+                                      limFrac as Float) as Void {
+        var cx = _geo.cx; var cy = _geo.cy;
+        var sx = xr + _geo.rad(0.040) + ringR;
+        var lim = _geo.rad(limFrac);
+        var dy = sy - cy;
+        var room = lim * lim - dy * dy;
+        if (room > 0) {
+            var maxx = cx + Math.sqrt(room) - ringR;
+            if (sx > maxx) { sx = maxx; }
+        }
+        _secPos = [sx, sy];
     }
 
     private function drawDigital(dc as Graphics.Dc, theme as Theme,
@@ -75,12 +84,21 @@ class DigitalFace {
         dc.drawText(cx + _geo.rad(0.262), ty, Graphics.FONT_XTINY, hrStr(),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        // the time — two-tone like the stock face (lume hours, gold minutes)
-        var t2y = cy + _geo.rad(0.005);
-        var xr = twoToneTime(dc, clock, t2y, Graphics.FONT_NUMBER_THAI_HOT);
-        _secPos = [xr + _geo.rad(0.115), t2y + _geo.rad(0.145)];
+        // the time — two-tone like the stock face (lume hours, gold minutes).
+        // All vertical spacing below derives from the real font height so the
+        // layout stays collision-free whatever size the device fonts are.
+        var font = Graphics.FONT_NUMBER_HOT;
+        var th = dc.getFontHeight(font).toFloat();
+        var t2y = cy - _geo.rad(0.020);
+        var xr = twoToneTime(dc, clock, t2y, font);
+        placeSecondsRing(xr, t2y + th * 0.24, _geo.rad(0.085), 0.660);
 
         if (showSec) { drawSeconds(dc, theme, clock.sec); }
+
+        // date below the digits (the top slot belongs to the trident/wordmark)
+        dc.setColor(GOLD, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, t2y + th * 0.55, Graphics.FONT_TINY, dateStr(),
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // left dotted gauge: body battery, lit bottom-up with a teal->gold ramp
         dottedGauge(dc, bodyBatteryFrac());
@@ -88,8 +106,9 @@ class DigitalFace {
         // right weekday strip, today in gold
         weekdayStrip(dc);
 
-        // bottom row: steps / battery / calories
-        var fy = cy + _geo.rad(0.415);
+        // bottom row: steps / battery / calories — below the date line
+        var fy = t2y + th * 0.55 + _geo.rad(0.130);
+        if (fy < cy + _geo.rad(0.415)) { fy = cy + _geo.rad(0.415); }
         var iy = fy - _geo.rad(0.020);
         var vy = fy + _geo.rad(0.062);
         shoe(dc, cx - _geo.rad(0.305), iy, _geo.rad(0.046), TEAL);
@@ -131,16 +150,25 @@ class DigitalFace {
         }
         batteryIcon(dc, cx + _geo.rad(0.585), cy, _geo.rad(0.058), _geo.rad(0.030), bf, GOLD);
 
-        // the time — two-tone (lower than the digital style so the date clears
-        // the tall system font)
-        var t2y = cy - _geo.rad(0.085);
-        var xr = twoToneTime(dc, clock, t2y, Graphics.FONT_NUMBER_HOT);
-        _secPos = [xr + _geo.rad(0.110), t2y];
+        // date below the wordmark
+        dc.setColor(GOLD, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, cy - _geo.rad(0.245), Graphics.FONT_TINY, dateStr(),
+                    Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        // the time — two-tone, spacing derived from the real font height so
+        // the date above and the pods below always clear it.
+        var font = Graphics.FONT_NUMBER_HOT;
+        var th = dc.getFontHeight(font).toFloat();
+        var t2y = cy + _geo.rad(0.010);
+        var xr = twoToneTime(dc, clock, t2y, font);
+        // upper-right of the digits — clear of the 3 o'clock battery icon
+        placeSecondsRing(xr, t2y - th * 0.26, _geo.rad(0.075), 0.620);
         if (showSec) { drawSeconds(dc, theme, clock.sec); }
 
         // complication pods (stock-analog style): HR / body battery / calories
-        var py = cy + _geo.rad(0.290);
-        var pr = _geo.rad(0.125);
+        var pr = _geo.rad(0.120);
+        var py = t2y + th * 0.42 + pr;
+        if (py < cy + _geo.rad(0.330)) { py = cy + _geo.rad(0.330); }
         pod(dc, cx - _geo.rad(0.300), py, pr, RED);
         heart(dc, cx - _geo.rad(0.300), py - _geo.rad(0.048), _geo.rad(0.034), RED);
         field(dc, cx - _geo.rad(0.300), py + _geo.rad(0.045), hrStr());
@@ -151,15 +179,15 @@ class DigitalFace {
         flame(dc, cx + _geo.rad(0.300), py - _geo.rad(0.048), _geo.rad(0.040), 0xE07A3A);
         field(dc, cx + _geo.rad(0.300), py + _geo.rad(0.045), caloriesStr());
 
-        // sunrise / sunset
+        // sunrise / sunset — below the pods
         refreshSunTimes();
-        var by = cy + _geo.rad(0.505);
-        sunIcon(dc, cx - _geo.rad(0.215), by, _geo.rad(0.040), GOLD, true);
+        var by = py + pr + _geo.rad(0.080);
+        sunIcon(dc, cx - _geo.rad(0.210), by, _geo.rad(0.045), GOLD, true);
         dc.setColor(DIMC, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx - _geo.rad(0.100), by, Graphics.FONT_XTINY, _sunRise,
+        dc.drawText(cx - _geo.rad(0.095), by, Graphics.FONT_XTINY, _sunRise,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-        sunIcon(dc, cx + _geo.rad(0.085), by, _geo.rad(0.040), 0xB07A4A, false);
-        dc.drawText(cx + _geo.rad(0.200), by, Graphics.FONT_XTINY, _sunSet,
+        sunIcon(dc, cx + _geo.rad(0.100), by, _geo.rad(0.045), 0xB07A4A, false);
+        dc.drawText(cx + _geo.rad(0.215), by, Graphics.FONT_XTINY, _sunSet,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -229,9 +257,9 @@ class DigitalFace {
     public function secondsPos(style as Number) as Array<Float> {
         if (_secPos != null) { return _secPos; }
         if (style == 2) {
-            return [_geo.cx + _geo.rad(0.460), _geo.cy - _geo.rad(0.085)];
+            return [_geo.cx + _geo.rad(0.420), _geo.cy - _geo.rad(0.140)];
         }
-        return [_geo.cx + _geo.rad(0.545), _geo.cy + _geo.rad(0.150)];
+        return [_geo.cx + _geo.rad(0.500), _geo.cy + _geo.rad(0.100)];
     }
 
     public function drawSeconds(dc as Graphics.Dc, theme as Theme, sec as Number) as Void {
@@ -271,16 +299,16 @@ class DigitalFace {
         var h = is24 ? clock.hour : (((clock.hour + 11) % 12) + 1);
         var hh = h.format(is24 ? "%02d" : "%d");
         var mm = clock.min.format("%02d");
-        var font = theme.faceStyle == 2 ? Graphics.FONT_NUMBER_HOT
-                                        : Graphics.FONT_NUMBER_THAI_HOT;
+        var font = Graphics.FONT_NUMBER_HOT;
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
+        var th = dc.getFontHeight(font).toFloat();
         var wH = dc.getTextWidthInPixels(hh, font);
         var wM = dc.getTextWidthInPixels(mm, font);
         var colw = _geo.rad(0.075);
         var x0 = cx - (wH + colw + wM) / 2.0;
-        var ty = cy - _geo.rad(0.040);
+        var ty = cy - _geo.rad(0.050);
         dc.setColor(0x707C7A, Graphics.COLOR_TRANSPARENT);   // dim lume
         dc.drawText(x0, ty, font, hh,
                     Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -292,7 +320,7 @@ class DigitalFace {
         dc.fillCircle(colx, ty - _geo.rad(0.055), _geo.rad(0.013));
         dc.fillCircle(colx, ty + _geo.rad(0.055), _geo.rad(0.013));
         dc.setColor(0x5A6462, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, cy + _geo.rad(0.170), Graphics.FONT_TINY, dateStr(),
+        dc.drawText(cx, ty + th * 0.55, Graphics.FONT_TINY, dateStr(),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -369,14 +397,24 @@ class DigitalFace {
     private function sunIcon(dc as Graphics.Dc, x as Float, y as Float, s as Float,
                              col as Number, rising as Boolean) as Void {
         dc.setColor(col, Graphics.COLOR_TRANSPARENT);
+        // solid half-sun on the horizon (clip keeps the top half only)
+        dc.setClip((x - s).toNumber(), (y - s).toNumber(),
+                   (2 * s).toNumber(), s.toNumber());
+        dc.fillCircle(x, y, s * 0.55);
+        dc.clearClip();
         dc.setPenWidth(2);
-        dc.drawArc(x, y, s * 0.5, Graphics.ARC_COUNTER_CLOCKWISE, 0, 180);
-        dc.drawLine(x - s * 0.85, y, x + s * 0.85, y);
-        var ay = rising ? y - s * 0.95 : y + s * 0.15;
-        var tip = rising ? ay - s * 0.30 : ay + s * 0.30;
-        dc.fillPolygon([[(x - s * 0.22).toNumber(), ay.toNumber()],
-                        [(x + s * 0.22).toNumber(), ay.toNumber()],
-                        [x.toNumber(), tip.toNumber()]]);
+        dc.drawLine(x - s * 0.90, y, x + s * 0.90, y);
+        // arrow beside the sun: up = rise, down = set
+        var tx = x - s * 1.45;
+        if (rising) {
+            dc.fillPolygon([[(tx - s * 0.28).toNumber(), (y + s * 0.12).toNumber()],
+                            [(tx + s * 0.28).toNumber(), (y + s * 0.12).toNumber()],
+                            [tx.toNumber(), (y - s * 0.50).toNumber()]]);
+        } else {
+            dc.fillPolygon([[(tx - s * 0.28).toNumber(), (y - s * 0.12).toNumber()],
+                            [(tx + s * 0.28).toNumber(), (y - s * 0.12).toNumber()],
+                            [tx.toNumber(), (y + s * 0.50).toNumber()]]);
+        }
     }
 
     private function field(dc as Graphics.Dc, x as Float, y as Float, v as String) as Void {
